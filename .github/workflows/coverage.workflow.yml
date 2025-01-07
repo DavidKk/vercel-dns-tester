@@ -1,0 +1,50 @@
+name: Coverage
+
+on:
+  push:
+    branches:
+      - '**'
+
+env:
+  # 产物文件名称
+  CI_COVERAGE_ARTIFACT_FILE: coverage-${{ github.sha }}
+
+jobs:
+  # 测试任务
+  test:
+    name: test#node-${{ matrix.node_version }}#${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        node_version: ['20']
+        os: [macOS-latest]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install NodeJS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'latest'
+
+      - name: Enable corepack
+        shell: bash
+        run: corepack enable
+
+      - name: Install dependencies
+        shell: bash
+        run: pnpm install
+
+      # 测试
+      - name: Run tests and collect coverage
+        shell: bash
+        run: pnpm ci:coverage
+        env:
+          # @see https://github.com/actions/runner-images/issues/70
+          NODE_OPTIONS: '--max_old_space_size=4096'
+
+      # 上传覆盖率
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4
+        env:
+          CODECOV_TOKEN: ${{ inputs.codecov_token }}
