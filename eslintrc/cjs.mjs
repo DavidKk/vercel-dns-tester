@@ -13,6 +13,5 @@ export default [
         // Add other globals as needed
       },
     },
-    ignores: ['.next/**/*', '.husky/**/*', 'coverage/**/*', 'node_modules'],
   },
 ]

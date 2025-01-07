@@ -6,6 +6,9 @@ import esmConfig from './eslintrc/esm.mjs'
 
 export default [
   {
+    ignores: ['.next/**/*', '.husky/**/*', 'coverage/**/*', 'node_modules'],
+  },
+  {
     languageOptions: {
       globals: {
         process: 'readonly',
@@ -41,7 +44,6 @@ export default [
         },
       ],
     },
-    ignores: ['.next/**/*', '.husky/**/*', 'coverage/**/*', 'node_modules'],
   },
   ...tsConfig,
   ...cjsConfig,

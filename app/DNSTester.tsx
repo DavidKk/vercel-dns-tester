@@ -8,19 +8,25 @@ import type { DNSRecord } from '@/services/dns/types'
 import DNSRecordTable from './DNSRecordTable'
 import { isDNSType, type DNSType } from './api/test/types'
 import { useCountdown } from '@/hooks/useCountdown'
+import type { QueryType } from '@/services/dns'
+import { isDNSQueryType } from '@/services/dns'
 
 export interface DNSTesterProps {
   dnsService?: string
+  dnsType?: string
   domain?: string
   queryType?: string
-  submit(dnsType: DNSType, dnsService: string, domain: string): Promise<DNSRecord[]>
+  submit(dnsType: DNSType, dnsService: string, domain: string, queryType: QueryType): Promise<DNSRecord[]>
 }
 
 export default function DNSTester(props: DNSTesterProps) {
-  const { dnsService: defaultDNSService, queryType: defaultQueryType, domain: defaultDomain, submit } = props
+  const { dnsService: defaultDNSService, dnsType: defaultDNSType, domain: defaultDomain, queryType: defaultQueryType, submit } = props
+
   const [dnsService, setDNSService] = useState<string>(defaultDNSService || '')
-  const [dnsType, setDNSType] = useState<DNSType>(defaultQueryType && isDNSType(defaultQueryType) ? defaultQueryType : 'resolve')
+  const [dnsType, setDNSType] = useState<DNSType>(defaultDNSType && isDNSType(defaultDNSType) ? defaultDNSType : 'resolve')
   const [domain, setDomain] = useState<string>(defaultDomain || '')
+  const [queryTypes, setQueryTypes] = useState<QueryType>(defaultQueryType && isDNSQueryType(defaultQueryType) ? defaultQueryType : 'A')
+
   const [records, setRecords] = useState<DNSRecord[]>([])
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState<boolean>(false)
@@ -44,7 +50,7 @@ export default function DNSTester(props: DNSTesterProps) {
     try {
       setIsLoading(true)
       const dnsServiceDomain = extractDNSDomain(dnsService)
-      const result = await submit(dnsType, dnsServiceDomain, domain)
+      const result = await submit(dnsType, dnsServiceDomain, domain, queryTypes)
       setRecords(result)
     } catch (error) {
       const message = stringifyUnknownError(error)
@@ -79,12 +85,20 @@ export default function DNSTester(props: DNSTesterProps) {
         </div>
 
         <div>
+          <label className="block font-medium mb-1">Query Type</label>
+          <select value={queryTypes} onChange={(event) => setQueryTypes(event.target.value as QueryType)} className="w-full px-3 py-2 border rounded-md">
+            <option value="A">A</option>
+            <option value="AAAA">AAAA</option>
+          </select>
+        </div>
+
+        <div>
           <label className="block font-medium mb-1">Domain to Test</label>
           <input type="text" value={domain} onChange={(e) => setDomain(e.target.value)} className="w-full px-3 py-2 border rounded-md" placeholder="e.g., example.com" />
         </div>
 
         <button type="submit" className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600">
-          Test
+          Submit
         </button>
       </form>
 

@@ -39,6 +39,5 @@ export default [
         },
       ],
     },
-    ignores: ['.next/**/*', '.husky/**/*', 'coverage/**/*', 'node_modules'],
   },
 ]

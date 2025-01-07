@@ -1,5 +1,4 @@
-import { isIPv6 } from '@/utils/ip'
-import type { DNSRecord } from './types'
+import type { DNSRecord, QueryType } from './types'
 import { stringifyDNSType } from './utils'
 
 export interface DNSResolveResponse {
@@ -11,12 +10,11 @@ export interface DNSResolveResponse {
   }>
 }
 
-export async function fetchDNSResolve(dns: string, domain: string): Promise<DNSRecord[]> {
+export async function fetchDNSResolve(dns: string, domain: string, queryType: QueryType): Promise<DNSRecord[]> {
   if (!dns || !domain) {
     throw new Error('DNS and domain are required')
   }
 
-  const queryType = isIPv6(domain) ? 'AAAA' : 'A'
   const queryUrl = `https://${dns}/resolve?name=${domain}&type=${queryType}`
   const response = await fetch(queryUrl)
   if (!response.ok) {
