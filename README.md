@@ -16,4 +16,4 @@ This project is designed to test the functionality of self-hosted DNS-over-HTTPS
 
 You can try out the tool live at the following URL:
 
-[Live Demo on Vercel](https://vercel-dns-tester.vercel.app)
+[Live Demo on Vercel](https://vercel-dns-tester.vercel.app/)
