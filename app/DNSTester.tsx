@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, FormEvent, useEffect } from 'react'
+import type { FormEvent } from 'react'
+import { useState, useEffect } from 'react'
 import { extractDNSDomain } from '@/utils/domain'
 import { stringifyUnknownError } from '@/utils/response'
-import { DNSRecord } from '@/services/dns/types'
+import type { DNSRecord } from '@/services/dns/types'
 import DNSRecordTable from './DNSRecordTable'
 import { isDNSType, type DNSType } from './api/test/types'
 import { useCountdown } from '@/hooks/useCountdown'
