@@ -22,6 +22,7 @@ export const register =
     const logs = typeof chalk[color] === 'function' ? chalk[color](content) : content
 
     if (!(onlyShowInVerbose && !verbose)) {
+       
       // eslint-disable-next-line no-console
       console.log(logs)
     }

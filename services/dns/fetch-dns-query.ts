@@ -1,5 +1,5 @@
 import { isIPv6 } from '@/utils/ip'
-import { DNSRecord } from './types'
+import type { DNSRecord } from './types'
 import { stringifyDNSType } from './utils'
 
 /**
@@ -28,7 +28,6 @@ export async function fetchDNSQuery(dns: string, domain: string) {
   }
 
   const data = await response.arrayBuffer()
-  console.log(parseDNSResponse(data))
   const result = parseDNSResponse(data)
   return result
 }
@@ -94,15 +93,10 @@ function parseDNSResponse(buffer: ArrayBuffer): DNSRecord[] {
   const records: DNSRecord[] = []
 
   // Parse Header
-  const transactionId = view.getUint16(0)
-  const flags = view.getUint16(2)
+  // const transactionId = view.getUint16(0)
+  // const flags = view.getUint16(2)
   const questionCount = view.getUint16(4)
   const answerCount = view.getUint16(6)
-
-  console.log('Transaction ID:', transactionId.toString(16))
-  console.log('Flags:', flags.toString(16))
-  console.log('Questions:', questionCount)
-  console.log('Answers:', answerCount)
 
   // Skip Header (12 bytes) and parse Questions
   let offset = 12
@@ -166,7 +160,7 @@ function parseResourceRecord(view: DataView, offset: number) {
   offset += 2
 
   // Parse CLASS (2 bytes)
-  const cls = view.getUint16(offset)
+  // const cls = view.getUint16(offset)
   offset += 2
 
   // Parse TTL (4 bytes)

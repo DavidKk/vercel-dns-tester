@@ -1,7 +1,8 @@
 import { stringifyUnknownError } from '@/utils/response'
-import { NextRequest, NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+import { NextResponse } from 'next/server'
 
-export function api(handle: (req: NextRequest) => any) {
+export function api(handle: (req: NextRequest) => Promise<Record<string, any>>) {
   return async (req: NextRequest) => {
     try {
       const result = await handle(req)

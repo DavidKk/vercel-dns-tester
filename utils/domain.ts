@@ -11,6 +11,7 @@ export function extractDNSDomain(url: string) {
     const uri = new URL(url)
     return uri.hostname
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error(`Invalid URL: ${url}`, error)
     return ''
   }

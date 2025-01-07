@@ -13,7 +13,10 @@
     "lint:ts": "eslint -c eslint.config.mjs --fix .",
     "dev": "next dev --turbopack",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "test": "jest -c ./jest.config.ts --coverage --reporters=default --reporters=jest-junit --passWithNoTests",
+    "test:watch": "jest --watch",
+    "ok": "pnpm format && pnpm lint && pnpm build && pnpm test"
   },
   "dependencies": {
     "react": "^19.0.0",

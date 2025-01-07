@@ -1,7 +1,7 @@
 'use server'
 
 import { fetchDNSQuery, fetchDNSResolve } from '@/services/dns'
-import { DNSType } from './types'
+import type { DNSType } from './types'
 
 export async function testDNS(type: DNSType, dnsService: string, domain: string) {
   switch (type) {

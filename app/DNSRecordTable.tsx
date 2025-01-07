@@ -1,6 +1,6 @@
 'use client'
 
-import { DNSRecord } from '@/services/dns/types'
+import type { DNSRecord } from '@/services/dns/types'
 
 export interface DNSRecordTableProps {
   records: DNSRecord[]
