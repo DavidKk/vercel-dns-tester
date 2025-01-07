@@ -1,5 +1,4 @@
-import { isIPv6 } from '@/utils/ip'
-import type { DNSRecord } from './types'
+import type { DNSRecord, QueryType } from './types'
 import { stringifyDNSType } from './utils'
 
 /**
@@ -8,12 +7,11 @@ import { stringifyDNSType } from './utils'
  * @param domain - The domain name to resolve (e.g., "example.com").
  * @returns A parsed array of DNS records from the response.
  */
-export async function fetchDNSQuery(dns: string, domain: string) {
+export async function fetchDNSQuery(dns: string, domain: string, queryType: 'A' | 'AAAA'): Promise<DNSRecord[]> {
   if (!dns || !domain) {
     throw new Error('DNS and domain are required')
   }
 
-  const queryType = isIPv6(domain) ? 'AAAA' : 'A'
   const queryUrl = `https://${dns}/dns-query`
   const response = await fetch(queryUrl, {
     method: 'POST',
@@ -42,7 +40,7 @@ export async function fetchDNSQuery(dns: string, domain: string) {
  * - Header: Transaction ID, Flags, Questions, and RR counts.
  * - Question: Encoded domain name, query type, and query class.
  */
-function generateDNSMessage(domain: string, queryType: 'A' | 'AAAA'): Uint8Array {
+function generateDNSMessage(domain: string, queryType: QueryType): Uint8Array {
   // Transaction ID: 2 bytes
   const transactionId = new Uint8Array([0xab, 0xcd])
 

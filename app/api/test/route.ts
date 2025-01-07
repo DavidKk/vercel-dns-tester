@@ -8,5 +8,5 @@ export const POST = api(async (req: NextRequest) => {
     throw new Error('Missing required parameters')
   }
 
-  return testDNS(queryType, dnsService, domain)
+  return testDNS(queryType, dnsService, domain, queryType)
 })
