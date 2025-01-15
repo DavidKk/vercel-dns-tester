@@ -1,31 +1,33 @@
 'use client'
 
 import type { FormEvent } from 'react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { extractDNSDomain } from '@/utils/domain'
 import { stringifyUnknownError } from '@/utils/response'
-import type { DNSRecord } from '@/services/dns/types'
+import type { DNSRecord, RequestType } from '@/services/dns/types'
 import DNSRecordTable from './DNSRecordTable'
 import { isDNSType, type DNSType } from './api/test/types'
 import { useCountdown } from '@/hooks/useCountdown'
 import type { QueryType } from '@/services/dns'
-import { isDNSQueryType } from '@/services/dns'
+import { fetchDNSQuery, fetchDNSResolve, isDNSQueryType, isRequestType } from '@/services/dns'
 
 export interface DNSTesterProps {
   dnsService?: string
   dnsType?: string
   domain?: string
   queryType?: string
+  requestType?: string
   submit(dnsType: DNSType, dnsService: string, domain: string, queryType: QueryType): Promise<DNSRecord[]>
 }
 
 export default function DNSTester(props: DNSTesterProps) {
-  const { dnsService: defaultDNSService, dnsType: defaultDNSType, domain: defaultDomain, queryType: defaultQueryType, submit } = props
+  const { dnsService: defaultDNSService, dnsType: defaultDNSType, domain: defaultDomain, queryType: defaultQueryType, requestType: defaultRequestType, submit } = props
 
   const [dnsService, setDNSService] = useState<string>(defaultDNSService || '')
   const [dnsType, setDNSType] = useState<DNSType>(defaultDNSType && isDNSType(defaultDNSType) ? defaultDNSType : 'resolve')
   const [domain, setDomain] = useState<string>(defaultDomain || '')
   const [queryTypes, setQueryTypes] = useState<QueryType>(defaultQueryType && isDNSQueryType(defaultQueryType) ? defaultQueryType : 'A')
+  const [requestType, setRequestType] = useState<RequestType>(defaultRequestType && isRequestType(defaultRequestType) ? defaultRequestType : 'server')
 
   const [records, setRecords] = useState<DNSRecord[]>([])
   const [error, setError] = useState<string | null>(null)
@@ -41,6 +43,17 @@ export default function DNSTester(props: DNSTesterProps) {
     run()
   }, [error])
 
+  const submitByClient = (type: DNSType, dnsService: string, domain: string, queryType: QueryType) => {
+    switch (type) {
+      case 'resolve':
+        return fetchDNSResolve(dnsService, domain, queryType)
+      case 'dns-query':
+        return fetchDNSQuery(dnsService, domain, queryType)
+      default:
+        throw new Error('Invalid DNS type')
+    }
+  }
+
   const handleTest = async (event: FormEvent) => {
     event.preventDefault()
 
@@ -50,7 +63,8 @@ export default function DNSTester(props: DNSTesterProps) {
     try {
       setIsLoading(true)
       const dnsServiceDomain = extractDNSDomain(dnsService)
-      const result = await submit(dnsType, dnsServiceDomain, domain, queryTypes)
+      const fn = requestType === 'server' ? submit : submitByClient
+      const result = await fn(dnsType, dnsServiceDomain, domain, queryTypes)
       setRecords(result)
     } catch (error) {
       const message = stringifyUnknownError(error)
@@ -89,6 +103,14 @@ export default function DNSTester(props: DNSTesterProps) {
           <select value={queryTypes} onChange={(event) => setQueryTypes(event.target.value as QueryType)} className="w-full px-3 py-2 border rounded-md">
             <option value="A">A</option>
             <option value="AAAA">AAAA</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block font-medium mb-1">Request Client</label>
+          <select value={requestType} onChange={(event) => setRequestType(event.target.value as RequestType)} className="w-full px-3 py-2 border rounded-md">
+            <option value="server">Server</option>
+            <option value="client">Client</option>
           </select>
         </div>
 
