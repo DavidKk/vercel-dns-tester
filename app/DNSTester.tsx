@@ -1,7 +1,7 @@
 'use client'
 
 import type { FormEvent } from 'react'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { extractDNSDomain } from '@/utils/domain'
 import { stringifyUnknownError } from '@/utils/response'
 import type { DNSRecord, RequestType } from '@/services/dns/types'
