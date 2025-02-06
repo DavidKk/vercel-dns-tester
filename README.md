@@ -1,8 +1,10 @@
+[![Build Status](https://github.com/DavidKk/vercel-dns-tester/actions/workflows/coverage.workflow.yml/badge.svg)](https://github.com/DavidKk/vercel-dns-tester/actions/workflows/coverage.workflow.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![中文](https://img.shields.io/badge/docs-%E4%B8%AD%E6%96%87-green?style=flat-square&logo=docs)](https://github.com/DavidKk/vercel-dns-tester/blob/main/README.zh-CN.md) [![English](https://img.shields.io/badge/docs-English-green?style=flat-square&logo=docs)](https://github.com/DavidKk/vercel-dns-tester/blob/main/README.md)
+
 # DOH Service Testing Tool
 
 This project is designed to test the functionality of self-hosted DNS-over-HTTPS (DOH) services. It helps verify whether a DOH setup, such as an Nginx reverse proxy for a DOH server like CoreDNS, is correctly configured and operational. It also checks SSL certificate setups and ensures proper communication between the client and the DOH server.
 
-### Purpose
+## Features
 
 - **Test DOH Services**: Verify that your self-hosted DOH service is functional and compliant.
 - **SSL Validation**: Ensure that SSL certificates for the DOH server are correctly configured.
