@@ -119,7 +119,7 @@ export default function DNSTester(props: DNSTesterProps) {
           <input type="text" value={domain} onChange={(e) => setDomain(e.target.value)} className="w-full px-3 py-2 border rounded-md" placeholder="e.g., example.com" />
         </div>
 
-        <button type="submit" className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600">
+        <button type="submit" className="w-full bg-indigo-500 text-white py-2 px-4 rounded-md hover:bg-indigo-600">
           Submit
         </button>
       </form>

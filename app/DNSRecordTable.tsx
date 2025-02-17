@@ -16,12 +16,12 @@ export default function DNSRecordTable(props: DNSRecordTableProps) {
       {loading ? (
         <div className="flex flex-col justify-center items-center py-8">
           <div className="flex items-center space-x-2">
-            <div className="w-4 h-4 rounded-full bg-blue-500 animate-pulse"></div>
-            <div className="w-4 h-4 rounded-full bg-blue-500 animate-pulse animation-delay-200"></div>
-            <div className="w-4 h-4 rounded-full bg-blue-500 animate-pulse animation-delay-400"></div>
+            <div className="w-4 h-4 rounded-full bg-indigo-500 animate-pulse"></div>
+            <div className="w-4 h-4 rounded-full bg-indigo-500 animate-pulse animation-delay-200"></div>
+            <div className="w-4 h-4 rounded-full bg-indigo-500 animate-pulse animation-delay-400"></div>
           </div>
 
-          <div className="ml-3 mt-4 text-blue-600 font-medium">Loading...</div>
+          <div className="ml-3 mt-4 text-indigo-600 font-medium">Loading...</div>
         </div>
       ) : records && records.length === 0 ? (
         <p className="text-gray-500">No records found.</p>
