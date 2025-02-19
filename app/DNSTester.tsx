@@ -103,6 +103,10 @@ export default function DNSTester(props: DNSTesterProps) {
           <select value={queryTypes} onChange={(event) => setQueryTypes(event.target.value as QueryType)} className="w-full px-3 py-2 border rounded-md">
             <option value="A">A</option>
             <option value="AAAA">AAAA</option>
+            <option value="CNAME">CNAME</option>
+            <option value="MX">MX</option>
+            <option value="NS">NS</option>
+            <option value="TXT">TXT</option>
           </select>
         </div>
 
