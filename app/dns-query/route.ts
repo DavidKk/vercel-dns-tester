@@ -7,7 +7,7 @@ import { setHeaders } from '@/services/context'
 import { getGistInfo, readGistFile } from '@/services/gist'
 import { GIST_HOSTS_FILE } from './constants'
 
-export const GET = buffer(async (req: NextRequest) => {
+export const POST = buffer(async (req: NextRequest) => {
   const buffer = await req.arrayBuffer()
   const { domain, queryType } = parseDNSQuery(new Uint8Array(buffer))
 
