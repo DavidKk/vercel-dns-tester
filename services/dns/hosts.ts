@@ -1,4 +1,4 @@
-import { convertToDNSMessage } from './fetch-dns-query'
+import { convertToDNSMessage } from './dns-message'
 import type { DNSRecord } from './types'
 
 /**
