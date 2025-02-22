@@ -6,7 +6,7 @@ import Stackblitz from '@stackblitz/sdk'
 import type { Project, VM } from '@stackblitz/sdk'
 import { CloudArrowUpIcon } from '@heroicons/react/16/solid'
 import { Spinner } from '@/components/Spinner'
-import { ENTRY_SCRIPT_FILE, PACKAGE_FILE } from './constants'
+import { PACKAGE_FILE } from './constants'
 import { updateFiles } from './actions'
 
 export interface EditorProps {
@@ -38,7 +38,7 @@ export default function Editor(props: EditorProps) {
       const needUpdateFiles = Array.from<{ file: string; content: string | null }>(
         (function* () {
           for (const [file, content] of Object.entries(snapshot)) {
-            if (file === PACKAGE_FILE || file === ENTRY_SCRIPT_FILE) {
+            if (file === PACKAGE_FILE) {
               continue
             }
 
