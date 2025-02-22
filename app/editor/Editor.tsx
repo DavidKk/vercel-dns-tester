@@ -46,9 +46,7 @@ export default function Editor(props: EditorProps) {
               continue
             }
 
-            if (file.endsWith('.js')) {
-              yield { file, content }
-            }
+            yield { file, content }
           }
         })()
       )
