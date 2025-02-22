@@ -50,10 +50,21 @@
 
 本服务支持通过 GitHub Gist 配置自定义的 HOSTS 记录：
 
-1. 在 GitHub Gist 中创建配置文件。
-2. 在工具的编辑器界面中设置 Gist ID。
+1. 在 GitHub Gist 中创建配置文件，使用标准 HOSTS 文件格式：
+
+   ```
+   192.168.1.1 example.com
+   192.168.1.2 test.example.com
+   ```
+
+2. 在工具的编辑器界面（`/editor`）中设置 Gist ID。
 3. 保存后，您的自定义 HOSTS 记录将通过 DOH 服务下发。
-4. 可以通过 `/editor` 界面编辑和管理 Gist 配置。
+4. 您可以通过以下方式管理 HOSTS 配置：
+   - Web 界面：访问 `/editor` 可视化管理配置
+   - API 接口：使用 REST APIs，包含以下端点：
+     - `PUT /api/hosts`：添加或更新 HOSTS 记录
+     - `DELETE /api/hosts`：删除 HOSTS 记录
+     - 需要在请求头中包含 `X-API-TOKEN` 进行身份验证
 
 ## 部署到 Vercel
 
@@ -70,6 +81,7 @@
 - `ACCESS_2FA_SECRET`: 2FA 密钥，可以使用 [https://vercel-2fa.vercel.app](https://vercel-2fa.vercel.app) 生成 TOKEN。
 - `JWT_SECRET`: JWT 密钥。
 - `JWT_EXPIRES_IN`: JWT 过期时间。
+- `API_SECRET`: API 密钥。
 
 ## 快速开始
 

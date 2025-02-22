@@ -2,6 +2,7 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { verifyToken } from '@/utils/jwt'
 import { AUTH_TOKEN_NAME } from './constants'
+import { getHeaders } from '../context'
 
 export interface CheckAccessOptions {
   loginUrl?: string
@@ -56,4 +57,21 @@ export async function checkUnAccess(options?: CheckUnAccessOptions) {
   }
 
   redirect(redirectUrl)
+}
+
+export function checkHeaders(requiredHeaders: Record<string, string>) {
+  const headers = getHeaders()
+  if (!headers) {
+    return false
+  }
+
+  return Object.entries(requiredHeaders).every(([header, expectedValue]) => {
+    const actualValue = headers.get(header)
+    return actualValue === expectedValue
+  })
+}
+
+export function checkApiAccess() {
+  const token = process.env.API_SECRET
+  return checkHeaders({ 'X-API-TOKEN': token })
 }

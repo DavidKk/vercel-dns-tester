@@ -50,10 +50,21 @@ You can try out the tool live at the following URL:
 
 This service supports custom HOSTS records configuration through GitHub Gist:
 
-1. Create a configuration file in GitHub Gist.
-2. Set the Gist ID in the tool's editor interface.
+1. Create a configuration file in GitHub Gist using standard HOSTS file format:
+
+   ```
+   192.168.1.1 example.com
+   192.168.1.2 test.example.com
+   ```
+
+2. Set the Gist ID in the tool's editor interface at `/editor`.
 3. After saving, your custom HOSTS records will be served through the DOH service.
-4. You can edit and manage Gist configurations through the `/editor` interface.
+4. You can manage your HOSTS configurations through:
+   - Web Interface: Access `/editor` to manage configurations visually
+   - API Interface: Use REST APIs with the following endpoints:
+     - `PUT /api/hosts`: Add or update HOSTS records
+     - `DELETE /api/hosts`: Remove HOSTS records
+     - Include `X-API-TOKEN` header for authentication
 
 ## Deploy to Vercel
 
@@ -70,6 +81,7 @@ Refer to the [`.env.example`](./.env.example) file to set up the necessary envir
 - `ACCESS_2FA_SECRET`: 2FA secret key, you can generate a TOKEN using [https://vercel-2fa.vercel.app](https://vercel-2fa.vercel.app)
 - `JWT_SECRET`: JWT secret key
 - `JWT_EXPIRES_IN`: JWT expiration time
+- `API_SECRET`: API secret key
 
 ## Quick Start
 
