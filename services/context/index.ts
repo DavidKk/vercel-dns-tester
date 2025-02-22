@@ -1,16 +1,19 @@
+import type { NextRequest } from 'next/server'
+
 export interface Context {
   headers: Headers
+  req: NextRequest
 }
 
 const storage = new AsyncLocalStorage<Context>()
 
-export function runWithContext<T>(fn: () => T): T {
-  return storage.run(createContext(), fn)
+export function runWithContext<T>(req: NextRequest, fn: () => T): T {
+  return storage.run(createContext(req), fn)
 }
 
-export function createContext(): Context {
+export function createContext(req: NextRequest): Context {
   const headers = new Headers()
-  return { headers }
+  return { req, headers }
 }
 
 export function getContext() {
@@ -33,6 +36,8 @@ export function withContext<T extends (ctx: Context, ...args: any[]) => any>(fn:
     return fn(context, ...args)
   }
 }
+
+export const getReqHeaders = withContext((ctx) => ctx.req.headers)
 
 export const getHeaders = withContext((ctx) => ctx.headers)
 

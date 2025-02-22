@@ -2,7 +2,7 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { verifyToken } from '@/utils/jwt'
 import { AUTH_TOKEN_NAME } from './constants'
-import { getHeaders } from '../context'
+import { getReqHeaders } from '../context'
 
 export interface CheckAccessOptions {
   loginUrl?: string
@@ -60,7 +60,7 @@ export async function checkUnAccess(options?: CheckUnAccessOptions) {
 }
 
 export function checkHeaders(requiredHeaders: Record<string, string>) {
-  const headers = getHeaders()
+  const headers = getReqHeaders()
   if (!headers) {
     return false
   }

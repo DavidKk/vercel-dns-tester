@@ -29,7 +29,6 @@ export const PUT = api(async (req) => {
     .join('\n')
 
   await writeGistFile({ ...params, fileName: GIST_HOSTS_FILE, content })
-
   return { success: true }
 })
 
