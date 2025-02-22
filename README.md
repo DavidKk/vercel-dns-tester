@@ -66,6 +66,24 @@ This service supports custom HOSTS records configuration through GitHub Gist:
      - `DELETE /api/hosts`: Remove HOSTS records
      - Include `X-API-TOKEN` header for authentication
 
+```bash
+# PUT /api/hosts
+curl -X PUT \
+  -H "X-API-TOKEN: your-api-token" \
+  -H "Content-Type: application/json" \
+  -d '{"example.com":"1.2.3.4","test.com":"5.6.7.8"}' \
+  https://vercel-dns-tester.vercel.app/api/hosts
+```
+
+```bash
+# DELETE /api/hosts
+curl -X DELETE \
+  -H "X-API-TOKEN: your-api-token" \
+  -H "Content-Type: application/json" \
+  -d '["example.com","test.com"]' \
+  https://vercel-dns-tester.vercel.app/api/hosts
+```
+
 ## Deploy to Vercel
 
 [![Deploy to Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FDavidKk%2Fvercel-proxy-rule)
