@@ -1,21 +1,84 @@
-[![Build Status](https://github.com/DavidKk/vercel-dns-tester/actions/workflows/coverage.workflow.yml/badge.svg)](https://github.com/DavidKk/vercel-dns-tester/actions/workflows/coverage.workflow.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![中文](https://img.shields.io/badge/docs-%E4%B8%AD%E6%96%87-green?style=flat-square&logo=docs)](https://github.com/DavidKk/vercel-dns-tester/blob/main/README.zh-CN.md) [![English](https://img.shields.io/badge/docs-English-green?style=flat-square&logo=docs)](https://github.com/DavidKk/vercel-dns-tester/blob/main/README.md)
-
 # DOH Service Testing Tool
 
-This project is designed to test the functionality of self-hosted DNS-over-HTTPS (DOH) services. It helps verify whether a DOH setup, such as an Nginx reverse proxy for a DOH server like CoreDNS, is correctly configured and operational. It also checks SSL certificate setups and ensures proper communication between the client and the DOH server.
+[![Build Status](https://github.com/DavidKk/vercel-dns-tester/actions/workflows/coverage.workflow.yml/badge.svg)](https://github.com/DavidKk/vercel-dns-tester/actions/workflows/coverage.workflow.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![中文](https://img.shields.io/badge/%E6%96%87%E6%A1%A3-%E4%B8%AD%E6%96%87-green?style=flat-square&logo=docs)](https://github.com/DavidKk/vercel-dns-tester/blob/main/README.zh-CN.md) [![English](https://img.shields.io/badge/docs-English-green?style=flat-square&logo=docs)](https://github.com/DavidKk/vercel-dns-tester/blob/main/README.md)
 
-## Features
+This project is designed to test the functionality of self-hosted DNS-over-HTTPS (DOH) services, verifying their configuration and operational status. Additionally, it provides a ready-to-use DOH service API that supports custom domains and HOSTS configuration.
 
-- **Test DOH Services**: Verify that your self-hosted DOH service is functional and compliant.
+## Features Overview
+
+### Testing Tool Features
+
+- **DOH Service Testing**: Verify that your self-hosted DOH service is functional and compliant.
 - **SSL Validation**: Ensure that SSL certificates for the DOH server are correctly configured.
 
-### Example Use Cases
+This functionality is particularly suitable for:
+
+- DNS resolution for internal services.
+- Domain configuration in test environments.
+- Custom DNS resolution rules.
+
+### DOH Service API
+
+- **Standard DOH Query**: Provides standard-compliant DNS-over-HTTPS query service.
+- **Custom HOSTS Configuration**: Supports configuring and managing custom DNS records through GitHub Gist.
+
+## Usage Guide
+
+### Testing Tool Usage
+
+#### Example Use Cases
 
 - Testing a DOH service deployed with **Nginx** as a reverse proxy.
 - Validating a CoreDNS DOH server with a custom domain and SSL certificate.
 
-### Demo
+#### Online Demo
 
-You can try out the tool live at the following URL:
-
+You can try out the tool live at the following URL:  
 [Live Demo on Vercel](https://vercel-dns-tester.vercel.app/)
+
+### DOH Service Usage
+
+#### Service Endpoints
+
+1. **Default Domain**  
+   Use `https://vercel-dns-tester.vercel.app/dns-query` as the DOH service endpoint, supporting standard DOH query format.
+
+2. **Custom Domain**  
+   You can point your own domain to this service, and after configuration, use `https://your-domain/dns-query` as the DOH service endpoint.
+
+#### Custom HOSTS Configuration
+
+This service supports custom HOSTS records configuration through GitHub Gist:
+
+1. Create a configuration file in GitHub Gist.
+2. Set the Gist ID in the tool's editor interface.
+3. After saving, your custom HOSTS records will be served through the DOH service.
+4. You can edit and manage Gist configurations through the `/editor` interface.
+
+## Deploy to Vercel
+
+[![Deploy to Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FDavidKk%2Fvercel-proxy-rule)
+
+### Environment Variables Configuration
+
+Refer to the [`.env.example`](./.env.example) file to set up the necessary environment variables:
+
+- `GIST_ID`: GitHub Gist ID
+- `GIST_TOKEN`: GitHub Gist Token
+- `ACCESS_USERNAME`: Administrator username
+- `ACCESS_PASSWORD`: Administrator password
+- `ACCESS_2FA_SECRET`: 2FA secret key, you can generate a TOKEN using [https://vercel-2fa.vercel.app](https://vercel-2fa.vercel.app)
+- `JWT_SECRET`: JWT secret key
+- `JWT_EXPIRES_IN`: JWT expiration time
+
+## Quick Start
+
+1. Create a **GitHub Gist** and generate a **GitHub Access Token**.
+2. Set up the corresponding environment variables in Vercel.
+3. After deployment, you can manage proxies through the generated rules.
+
+### Important Notes
+
+- Ensure the GitHub Gist configuration file format is correct, otherwise parsing may fail.
+- Custom domains need proper DNS resolution and SSL certificate configuration.
+- If using 2FA, keep the generated TOKEN secure.
