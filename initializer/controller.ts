@@ -14,7 +14,7 @@ export interface ContextWithParams<P> extends Context {
 
 export function api(handle: (req: NextRequest, context: Context) => Promise<Record<string, any>>) {
   return async (req: NextRequest, context: Context) => {
-    return runWithContext(async () => {
+    return runWithContext(req, async () => {
       try {
         const result = await handle(req, context)
         if (result instanceof NextResponse) {
@@ -48,7 +48,7 @@ export function api(handle: (req: NextRequest, context: Context) => Promise<Reco
 
 export function plainText<P>(handle: (req: NextRequest, context: ContextWithParams<P>) => Promise<string | NextResponse>) {
   return async (req: NextRequest, context: ContextWithParams<P>) => {
-    return runWithContext(async () => {
+    return runWithContext(req, async () => {
       try {
         const result = await handle(req, context)
         const headers = getHeaders()
@@ -67,7 +67,7 @@ export function plainText<P>(handle: (req: NextRequest, context: ContextWithPara
 
 export function buffer<P>(handle: (req: NextRequest, context: ContextWithParams<P>) => Promise<ArrayBuffer | NextResponse>) {
   return async (req: NextRequest, context: ContextWithParams<P>) => {
-    return runWithContext(async () => {
+    return runWithContext(req, async () => {
       try {
         const result = await handle(req, context)
         const headers = getHeaders()
