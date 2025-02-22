@@ -51,6 +51,35 @@ export async function readGistFile(params: ReadGistFileParams) {
   return file.content
 }
 
+export interface WriteGistFileParams extends FetchGistFileParams {
+  fileName: string
+  content: string
+}
+
+export async function writeGistFile(params: WriteGistFileParams) {
+  const { gistId, gistToken, fileName, content } = params
+  const response = await fetch(`https://api.github.com/gists/${gistId}`, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `token ${gistToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      files: {
+        [fileName]: {
+          content,
+        },
+      },
+    }),
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to update gist')
+  }
+
+  return response.json()
+}
+
 export interface FilesInWriteGistFiles {
   file: string
   content: string | null
