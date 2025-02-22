@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
+import { Nav } from './Nav'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -17,14 +18,19 @@ export const metadata: Metadata = {
   description: 'DNS over HTTPS Server Tester',
 }
 
-export default function RootLayout({
-  children,
-}: Readonly<{
+export type Layoutprops = {
   children: React.ReactNode
-}>) {
+}
+
+export default function RootLayout(props: Readonly<Layoutprops>) {
+  const { children } = props
+
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>{children}</body>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <Nav />
+        {children}
+      </body>
     </html>
   )
 }

@@ -263,3 +263,89 @@ function parseRawData(view: DataView, offset: number, length: number): string {
   const bytes = new Uint8Array(view.buffer, offset, length)
   return String.fromCharCode(...bytes)
 }
+
+/**
+ * Convert DNS records to a binary DNS message format.
+ * @param records - Array of DNS records to convert.
+ * @returns An ArrayBuffer containing the DNS message.
+ */
+export function convertToDNSMessage(records: DNSRecord[]): ArrayBuffer {
+  // Calculate total size needed for the message
+  const headerSize = 12 // Fixed size for DNS header
+  const questionSize = 0 // No questions in response
+
+  // Pre-calculate sizes for all records
+  const recordSizes = records.map((record) => {
+    const nameSize = record.name.split('.').reduce((acc, part) => acc + part.length + 1, 1) // +1 for length byte, +1 for terminator
+    const fixedSize = 10 // Type(2) + Class(2) + TTL(4) + RDLENGTH(2)
+    const dataSize = record.type === 'A' ? 4 : record.type === 'AAAA' ? 16 : record.data.length
+    return nameSize + fixedSize + dataSize
+  })
+
+  const totalSize = headerSize + questionSize + recordSizes.reduce((a, b) => a + b, 0)
+  const buffer = new ArrayBuffer(totalSize)
+  const view = new DataView(buffer)
+  let offset = 0
+
+  // Write header
+  view.setUint16(0, 0xabcd) // Transaction ID
+  view.setUint16(2, 0x8180) // Flags (response + recursion available)
+  view.setUint16(4, 0) // Questions
+  view.setUint16(6, records.length) // Answer count
+  view.setUint16(8, 0) // Authority count
+  view.setUint16(10, 0) // Additional count
+  offset = 12
+
+  // Write each record
+  for (const record of records) {
+    // Write name
+    for (const part of record.name.split('.')) {
+      view.setUint8(offset++, part.length)
+      for (const char of part) {
+        view.setUint8(offset++, char.charCodeAt(0))
+      }
+    }
+    view.setUint8(offset++, 0) // Name terminator
+
+    // Write type
+    const typeCode = record.type === 'A' ? 1 : record.type === 'AAAA' ? 28 : 5 // 5 for CNAME
+    view.setUint16(offset, typeCode)
+    offset += 2
+
+    // Write class (IN = 1)
+    view.setUint16(offset, 1)
+    offset += 2
+
+    // Write TTL
+    view.setUint32(offset, record.ttl)
+    offset += 4
+
+    // Write RDATA
+    if (record.type === 'A') {
+      const parts = record.data.split('.')
+      view.setUint16(offset, 4) // RDLENGTH
+      offset += 2
+      for (const part of parts) {
+        view.setUint8(offset++, parseInt(part))
+      }
+    } else if (record.type === 'AAAA') {
+      view.setUint16(offset, 16) // RDLENGTH
+      offset += 2
+      const parts = record.data.split(':')
+      for (const part of parts) {
+        const value = parseInt(part || '0', 16)
+        view.setUint8(offset++, value >> 8)
+        view.setUint8(offset++, value & 0xff)
+      }
+    } else {
+      const data = Buffer.from(record.data)
+      view.setUint16(offset, data.length) // RDLENGTH
+      offset += 2
+      for (let i = 0; i < data.length; i++) {
+        view.setUint8(offset++, data[i])
+      }
+    }
+  }
+
+  return buffer
+}

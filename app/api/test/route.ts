@@ -1,5 +1,5 @@
 import type { NextRequest } from 'next/server'
-import { api } from '@/services/route/api'
+import { api } from '@/initializer/controller'
 import { testDNS } from './dns'
 
 export const POST = api(async (req: NextRequest) => {

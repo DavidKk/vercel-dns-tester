@@ -11,7 +11,7 @@ export default function DNSRecordTable(props: DNSRecordTableProps) {
   const { records, loading } = props
 
   return (
-    <div className="bg-white mt-8 p-6 rounded-lg shadow-md w-full max-w-4xl space-y-4">
+    <div className="bg-white mt-2 p-6 rounded-lg shadow-md w-full max-w-4xl space-y-4">
       <h2 className="text-xl font-semibold text-gray-700 mb-4">DNS Records</h2>
       {loading ? (
         <div className="flex flex-col justify-center items-center py-8">
