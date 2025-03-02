@@ -76,8 +76,7 @@ export default function DNSTester(props: DNSTesterProps) {
   }
 
   return (
-    <div className="min-h-[calc(100vh-60px)] flex flex-col items-center bg-gray-100 p-10 py-16 text-black">
-      <h1 className="font-bold mb-4 pb-2 text-3xl border-b-2 border-gray-200 mb-4 inline-block">DoH Tester</h1>
+    <div className="w-2/3 mx-auto text-black">
       <form onSubmit={handleTest} className="bg-white p-6 rounded-lg shadow-md w-full max-w-4xl space-y-4">
         <div>
           <label className="block font-medium mb-1">DNS Service Domain</label>
