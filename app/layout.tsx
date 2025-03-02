@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Analytics } from '@vercel/analytics/react'
 import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
 import { Nav } from './Nav'
@@ -18,15 +19,16 @@ export const metadata: Metadata = {
   description: 'DNS over HTTPS Server Tester',
 }
 
-export type Layoutprops = {
+interface RootLayoutProps {
   children: React.ReactNode
 }
 
-export default function RootLayout(props: Readonly<Layoutprops>) {
+export default function RootLayout(props: Readonly<RootLayoutProps>) {
   const { children } = props
 
   return (
     <html lang="en">
+      <Analytics />
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Nav />
         {children}
