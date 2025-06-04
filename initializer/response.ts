@@ -27,13 +27,14 @@ export function standardResponse(init?: StandardResponseInit) {
       value(status: number, options: ResponseInit = {}) {
         const { code, message, data } = this
 
-        return NextResponse.json(
-          { code, message, data },
-          {
-            status,
-            ...options,
-          }
-        )
+        const headers = new Headers()
+        options.headers?.forEach((value, key) => {
+          headers.set(key, value)
+        })
+
+        headers.set('Content-Type', 'application/json; charset=utf-8')
+
+        return NextResponse.json({ code, message, data }, { status, ...options, headers })
       },
     },
     toTextResponse: {
@@ -41,12 +42,19 @@ export function standardResponse(init?: StandardResponseInit) {
       configurable: false,
       value(status: number, options: ResponseInit = {}) {
         const { message } = this
-        return new NextResponse(message, { status, ...options })
+
+        const headers = new Headers()
+        options.headers?.forEach((value, key) => {
+          headers.set(key, value)
+        })
+
+        headers.set('Content-Type', 'text/plain; charset=utf-8')
+
+        return new NextResponse(message, { status, ...options, headers })
       },
     },
   })
 }
-
 export function isStandardResponse(data: any): data is StandardResponse {
   return data && typeof data === 'object' && typeof data.code === 'number' && typeof data.message === 'string'
 }

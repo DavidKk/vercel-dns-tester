@@ -76,8 +76,8 @@ export default function DNSTester(props: DNSTesterProps) {
   }
 
   return (
-    <div className="w-2/3 mx-auto text-black">
-      <form onSubmit={handleTest} className="bg-white p-6 rounded-lg shadow-md w-full max-w-4xl space-y-4">
+    <div className="mx-auto text-black">
+      <form onSubmit={handleTest} className="bg-white p-6 rounded-lg shadow-md w-full space-y-4">
         <div>
           <label className="block font-medium mb-1">DNS Service Domain</label>
           <input
@@ -128,7 +128,7 @@ export default function DNSTester(props: DNSTesterProps) {
       </form>
 
       {error && (
-        <div className="bg-red-100 text-red-700 p-4 w-full max-w-4xl mt-4 rounded-lg shadow-md">
+        <div className="bg-red-100 text-red-700 p-4 w-full mt-4 rounded-lg shadow-md">
           <div className="flex justify-between items-center">
             <div>
               <h2 className="font-medium">Error:</h2>

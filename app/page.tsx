@@ -15,11 +15,12 @@ export default function Home() {
   const queryType = 'A'
 
   return (
-    <div className="min-h-[calc(100vh-60px)] gap-4 flex flex-col bg-gray-100 p-10 py-16 text-black">
-      <div className="w-2/3 mx-auto">
+    <div className="flex flex-col items-center p-10 pt-20">
+      <div className="w-full lg:w-2/3 md:w-1/2 mx-auto mb-10">
         <Meta {...metaProps} />
+
+        <DNSTester dnsService={dnsService} domain={domain} queryType={queryType} submit={testDNS} />
       </div>
-      <DNSTester dnsService={dnsService} domain={domain} queryType={queryType} submit={testDNS} />
     </div>
   )
 }
