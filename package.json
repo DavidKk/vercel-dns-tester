@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "description": "A DNS over HTTPS (DOH) testing tool and custom HOSTS configuration service for validating DOH service configuration and functionality.",
   "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DavidKk/vercel-dns-tester"
+  },
   "scripts": {
     "commit": "git-cz",
     "ci:coverage": "pnpm test",
