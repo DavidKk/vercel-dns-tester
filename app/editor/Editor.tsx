@@ -92,7 +92,7 @@ export default function Editor(props: EditorProps) {
   }, [])
 
   return (
-    <div className="w-screen h-[calc(100vh-60px)] relative bg-black">
+    <div className="w-screen h-[calc(100vh-124px)] relative bg-black">
       <div ref={editorRef} className="w-full h-full"></div>
       {!vm ? (
         <div className="fixed w-8 h-8 top-0 left-0 right-0 bottom-0 m-auto">
