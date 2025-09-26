@@ -19,4 +19,5 @@ export default (): Config.InitialOptions => ({
       prefix: '<rootDir>',
     }),
   },
+  setupFiles: ['<rootDir>/jest.setup.ts'],
 })

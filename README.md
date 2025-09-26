@@ -22,6 +22,12 @@ This functionality is particularly suitable for:
 - **Standard DOH Query**: Provides standard-compliant DNS-over-HTTPS query service.
 - **Custom HOSTS Configuration**: Supports configuring and managing custom DNS records through GitHub Gist.
 
+### MCP Service Features
+
+- **DNS Query Tools**: Provides programmatic access to DNS testing capabilities through Model Context Protocol (MCP).
+- **Batch DNS Queries**: Supports querying multiple domains across multiple DNS servers in a single request.
+- **Standardized API**: Exposes DNS testing functionality through a standardized MCP interface.
+
 ## Usage Guide
 
 ### Testing Tool Usage
@@ -82,6 +88,38 @@ curl -X DELETE \
   -H "Content-Type: application/json" \
   -d '["example.com","test.com"]' \
   https://vercel-dns-tester.vercel.app/api/hosts
+```
+
+### MCP Service Usage
+
+The MCP service provides programmatic access to DNS testing capabilities through standardized API endpoints.
+
+#### Service Endpoints
+
+- **MCP DNS Test Service**: `https://vercel-dns-tester.vercel.app/mcp/dns-test`
+
+#### Available Tools
+
+1. **query_dns**: Query DNS records for a domain using a specified DNS server
+2. **batch_query_dns**: Query DNS records for multiple domains across multiple DNS servers
+
+#### Example Usage
+
+```bash
+# Get service manifest
+curl -X GET https://vercel-dns-tester.vercel.app/mcp/dns-test
+
+# Query DNS records
+curl -X POST https://vercel-dns-tester.vercel.app/mcp/dns-test \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tool": "query_dns",
+    "params": {
+      "dnsServer": "1.1.1.1",
+      "domain": "example.com",
+      "queryType": "A"
+    }
+  }'
 ```
 
 ## Deploy to Vercel
