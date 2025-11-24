@@ -1,8 +1,8 @@
-import { api } from '@/initializer/controller'
-import { getGistInfo, readGistFile, writeGistFile } from '@/services/gist'
-import { checkApiAccess } from '@/services/auth/access'
 import { GIST_HOSTS_FILE } from '@/app/dns-query/constants'
+import { api } from '@/initializer/controller'
 import { unauthorized } from '@/initializer/response'
+import { checkApiAccess } from '@/services/auth/access'
+import { getGistInfo, readGistFile, writeGistFile } from '@/services/gist'
 
 export const PUT = api(async (req) => {
   if (!checkApiAccess()) {

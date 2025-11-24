@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+
 import { MCP_ERRORS } from './errors'
 
 export type MCPResponseType = 'result' | 'error'

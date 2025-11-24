@@ -1,4 +1,5 @@
 import { z } from 'zod'
+
 import { generateMCPManifest } from '@/initializer/mcp/creator'
 import { Tool } from '@/initializer/mcp/tool'
 

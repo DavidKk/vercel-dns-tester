@@ -1,6 +1,6 @@
 import { generateDNSMessage } from './dns-message'
-import { stringifyDNSType } from './utils'
 import type { DNSRecord } from './types'
+import { stringifyDNSType } from './utils'
 
 /**
  * Perform a DNS query using the DoH (DNS over HTTPS) `dns-query` endpoint.

@@ -1,5 +1,6 @@
-import BuildTime from './BuildTime'
 import { getProjects, type VercelProject } from '@/app/actions/vercel'
+
+import BuildTime from './BuildTime'
 
 export default async function Footer() {
   const projects = await getProjects()

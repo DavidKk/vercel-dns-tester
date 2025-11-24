@@ -1,4 +1,5 @@
 import { z } from 'zod'
+
 import { tool } from '@/initializer/mcp'
 import { fetchDNSQuery } from '@/services/dns'
 

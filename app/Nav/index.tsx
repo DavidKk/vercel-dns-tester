@@ -1,6 +1,8 @@
-import Link from 'next/link'
 import FeatherIcon from 'feather-icons-react'
+import Link from 'next/link'
+
 import { name, repository } from '@/package.json'
+
 import { DEFAULT_NAV } from './constants'
 
 interface NavItem {

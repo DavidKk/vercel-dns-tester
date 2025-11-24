@@ -1,7 +1,8 @@
 import { execSync } from 'child_process'
 import fs from 'fs'
 import path from 'path'
-import { warn, info, fail, ok } from './print.mjs'
+
+import { fail, info, ok,warn } from './print.mjs'
 
 const inPlatform = (platform) => platform === process.platform
 

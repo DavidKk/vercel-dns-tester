@@ -1,26 +1,29 @@
-import Meta, { generate } from '@/components/Meta'
-import DNSTester from './DNSTester'
 import { testDNS } from './api/test/dns'
+import DoHPlayground from './DoHPlayground'
 
-const { generateMetadata, metaProps } = generate({
-  title: 'DoH Tester - DNS over HTTPS Testing Tool',
-  description: 'A powerful DNS over HTTPS (DoH) testing tool that supports multiple DNS query types and custom HOSTS configuration, helping you verify and debug DNS resolution.',
-})
-
-export { generateMetadata }
+const defaults = {
+  dnsService: 'https://dns.google',
+  domain: 'example.com',
+  queryType: 'A',
+}
 
 export default function Home() {
-  const dnsService = 'dns.google'
-  const domain = 'example.com'
-  const queryType = 'A'
-
   return (
-    <div className="flex flex-col items-center p-10 pt-20">
-      <div className="w-full lg:w-2/3 md:w-1/2 mx-auto mb-10">
-        <Meta {...metaProps} />
+    <main className="min-h-screen bg-slate-50 py-10">
+      <section className="w-full max-w-5xl mx-auto px-6 space-y-8">
+        <header className="text-center space-y-3">
+          <span className="inline-flex items-center justify-center rounded-full bg-indigo-100 px-4 py-1 text-sm font-medium text-indigo-700">DNS over HTTPS playground</span>
+          <div className="space-y-3">
+            <h1 className="text-4xl font-semibold tracking-tight text-slate-900">Validate your DoH setup instantly</h1>
+            <p className="text-lg text-slate-600 max-w-4xl mx-auto">
+              Provide a DoH endpoint, query type, and target domain to inspect responses in real time. Switch request origins, test multiple record types, monitor countdowns, and
+              iterate without scrolling away from the form.
+            </p>
+          </div>
+        </header>
 
-        <DNSTester dnsService={dnsService} domain={domain} queryType={queryType} submit={testDNS} />
-      </div>
-    </div>
+        <DoHPlayground dnsService={defaults.dnsService} domain={defaults.domain} queryType={defaults.queryType} submit={testDNS} />
+      </section>
+    </main>
   )
 }

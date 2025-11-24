@@ -1,7 +1,9 @@
-import { NextResponse, type NextRequest } from 'next/server'
-import { api } from '@/initializer/controller'
+import { type NextRequest, NextResponse } from 'next/server'
+
 import type { ContextWithParams } from '@/initializer/controller'
-import { mcpResponse, mcpErrorToolNotFound, mcpErrorinvalidArguments, mcpErrorMethodNotAllowed } from './response'
+import { api } from '@/initializer/controller'
+
+import { mcpErrorinvalidArguments, mcpErrorMethodNotAllowed, mcpErrorToolNotFound, mcpResponse } from './response'
 import type { Tool } from './tool'
 
 /** MCP Tool interface */
@@ -37,7 +39,7 @@ export interface MCPManifest {
 export function generateMCPManifest(name: string, version: string, description: string, toolsMap: Map<string, Tool>): MCPManifest {
   const tools = Object.fromEntries(
     (function* () {
-      for (const [_, tool] of toolsMap) {
+      for (const [, tool] of toolsMap) {
         const manifest: MCPManifestTool = {
           description: tool.description,
           inputSchema: tool.manifest.parameters,

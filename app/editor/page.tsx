@@ -1,4 +1,5 @@
 import { checkAccess } from '@/services/auth/access'
+
 import { fetchFiles } from './actions'
 import Editor from './Editor'
 

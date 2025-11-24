@@ -2,6 +2,7 @@
 
 import type { QueryType } from '@/services/dns'
 import { fetchDNSQuery, fetchDNSResolve } from '@/services/dns'
+
 import type { DNSType } from './types'
 
 export async function testDNS(type: DNSType, dnsService: string, domain: string, queryType: QueryType) {

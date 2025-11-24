@@ -1,7 +1,7 @@
 'use server'
 
-import { formatProjectName } from '@/utils/format'
 import { name } from '@/package.json'
+import { formatProjectName } from '@/utils/format'
 
 const VERCEL_API_URL = 'https://api.vercel.com'
 

@@ -1,8 +1,10 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
+
 import { verifyToken } from '@/utils/jwt'
-import { AUTH_TOKEN_NAME } from './constants'
+
 import { getReqHeaders } from '../context'
+import { AUTH_TOKEN_NAME } from './constants'
 
 export interface CheckAccessOptions {
   loginUrl?: string

@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import type { NextRequest } from 'next/server'
+
 import type { Context } from '@/initializer/controller'
 import { jsonUnauthorized } from '@/initializer/response'
 import { validateCookie } from '@/services/auth/access'
