@@ -22,12 +22,6 @@
 - **标准 DOH 查询**：提供符合规范的 DNS-over-HTTPS 查询服务。
 - **自定义 HOSTS 配置**：支持通过 GitHub Gist 配置和管理自定义 DNS 记录。
 
-### MCP 服务功能
-
-- **DNS 查询工具**：通过模型上下文协议（MCP）提供 DNS 测试功能的程序化访问。
-- **批量 DNS 查询**：支持在单个请求中查询多个域名和多个 DNS 服务器。
-- **标准化 API**：通过标准化的 MCP 接口暴露 DNS 测试功能。
-
 ## 使用指南
 
 ### 测试工具使用
@@ -88,38 +82,6 @@ curl -X DELETE \
   -H "Content-Type: application/json" \
   -d '["example.com","test.com"]' \
   https://vercel-dns-tester.vercel.app/api/hosts
-```
-
-### MCP 服务使用
-
-MCP 服务通过标准化的 API 端点提供 DNS 测试功能的程序化访问。
-
-#### 服务端点
-
-- **MCP DNS 测试服务**：`https://vercel-dns-tester.vercel.app/mcp/dns-test`
-
-#### 可用工具
-
-1. **query_dns**：使用指定的 DNS 服务器查询域名的 DNS 记录
-2. **batch_query_dns**：查询多个域名和多个 DNS 服务器的 DNS 记录
-
-#### 使用示例
-
-```bash
-# 获取服务清单
-curl -X GET https://vercel-dns-tester.vercel.app/mcp/dns-test
-
-# 查询 DNS 记录
-curl -X POST https://vercel-dns-tester.vercel.app/mcp/dns-test \
-  -H "Content-Type: application/json" \
-  -d '{
-    "tool": "query_dns",
-    "params": {
-      "dnsServer": "1.1.1.1",
-      "domain": "example.com",
-      "queryType": "A"
-    }
-  }'
 ```
 
 ## 部署到 Vercel

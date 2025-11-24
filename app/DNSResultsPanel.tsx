@@ -74,4 +74,3 @@ export default function DNSResultsPanel(props: DNSResultsPanelProps) {
     </section>
   )
 }
-
