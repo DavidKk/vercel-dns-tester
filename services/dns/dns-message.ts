@@ -95,11 +95,28 @@ export function convertToDNSMessage(records: DNSRecord[]): ArrayBuffer {
   const recordSizes = records.map((record) => {
     const nameSize = record.name.split('.').reduce((acc, part) => acc + part.length + 1, 1) // +1 for length byte, +1 for terminator
     const fixedSize = 10 // Type(2) + Class(2) + TTL(4) + RDLENGTH(2)
-    const dataSize = record.type === 'A' ? 4 : record.type === 'AAAA' ? 16 : record.data.length
-    return nameSize + fixedSize + dataSize
+    let dataSize: number
+    if (record.type === 'A') {
+      dataSize = 4
+    } else if (record.type === 'AAAA') {
+      dataSize = 16
+    } else {
+      // For other types, use Buffer to get actual byte length
+      try {
+        dataSize = Buffer.from(record.data, 'utf8').length
+      } catch {
+        dataSize = record.data.length
+      }
+    }
+    const totalRecordSize = nameSize + fixedSize + dataSize
+    // eslint-disable-next-line no-console
+    console.log('[convertToDNSMessage] Record:', record.name, record.type, 'nameSize:', nameSize, 'dataSize:', dataSize, 'total:', totalRecordSize)
+    return totalRecordSize
   })
 
   const totalSize = headerSize + questionSize + recordSizes.reduce((a, b) => a + b, 0)
+  // eslint-disable-next-line no-console
+  console.log('[convertToDNSMessage] Total size:', totalSize, 'records count:', records.length)
   const buffer = new ArrayBuffer(totalSize)
   const view = new DataView(buffer)
   let offset = 0
