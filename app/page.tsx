@@ -1,13 +1,35 @@
+import { headers } from 'next/headers'
+
 import { testDNS } from './api/test/dns'
 import DoHPlayground from './DoHPlayground'
 
-const defaults = {
-  dnsService: 'https://dns.google',
-  domain: 'example.com',
-  queryType: 'A',
+async function getDefaultDNSService(): Promise<string> {
+  try {
+    const headersList = await headers()
+    const host = headersList.get('host')
+    const forwardedProto = headersList.get('x-forwarded-proto')
+    const protocol = forwardedProto || (process.env.NODE_ENV === 'production' ? 'https' : 'http')
+
+    // Use current project address if HTTPS is available
+    if (protocol === 'https' && host) {
+      return `https://${host}`
+    }
+  } catch {
+    // Fallback to default if headers are unavailable (e.g., in client-side)
+  }
+
+  return 'https://dns.google'
 }
 
-export default function Home() {
+export default async function Home() {
+  const defaultDNSService = await getDefaultDNSService()
+
+  const defaults = {
+    dnsService: defaultDNSService,
+    domain: 'example.com',
+    queryType: 'A',
+  }
+
   return (
     <main className="min-h-screen bg-slate-50 py-10">
       <section className="w-full max-w-5xl mx-auto px-6 space-y-8">

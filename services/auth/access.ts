@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
+import type { NextRequest } from 'next/server'
 
 import { verifyToken } from '@/utils/jwt'
 
@@ -76,4 +77,17 @@ export function checkHeaders(requiredHeaders: Record<string, string>) {
 export function checkApiAccess() {
   const token = process.env.API_SECRET
   return checkHeaders({ 'X-API-TOKEN': token })
+}
+
+export function checkDoHAccess(req: NextRequest) {
+  const apiKey = process.env.DOH_API_KEY
+  if (!apiKey) {
+    return true
+  }
+
+  const headerKey = req.headers.get('x-doh-api-key')
+  const url = new URL(req.url)
+  const queryKey = url.searchParams.get('token')
+
+  return headerKey === apiKey || queryKey === apiKey
 }

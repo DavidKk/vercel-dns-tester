@@ -3,6 +3,8 @@
 import type { FormEvent } from 'react'
 import { useEffect, useState } from 'react'
 
+import CustomHeaderInput from '@/components/CustomHeaderInput'
+import DNSInput from '@/components/DNSInput'
 import FormSelect from '@/components/FormSelect'
 import Switch from '@/components/Switch'
 import { useCountdown } from '@/hooks/useCountdown'
@@ -21,7 +23,7 @@ export interface DoHPlaygroundProps {
   domain?: string
   queryType?: string
   requestType?: string
-  submit(dnsType: DNSType, dnsService: string, domain: string, queryType: QueryType): Promise<DNSRecord[]>
+  submit(dnsType: DNSType, dnsService: string, domain: string, queryType: QueryType, headers?: Record<string, string>): Promise<DNSRecord[]>
 }
 
 export default function DoHPlayground(props: DoHPlaygroundProps) {
@@ -32,6 +34,13 @@ export default function DoHPlayground(props: DoHPlaygroundProps) {
   const [domain, setDomain] = useState<string>(defaultDomain || '')
   const [queryTypes, setQueryTypes] = useState<QueryType>(defaultQueryType && isDNSQueryType(defaultQueryType) ? defaultQueryType : 'A')
   const [requestType, setRequestType] = useState<RequestType>(defaultRequestType && isRequestType(defaultRequestType) ? defaultRequestType : 'server')
+  interface CustomHeader {
+    id: string
+    name: string
+    value: string
+  }
+  const [customHeaders, setCustomHeaders] = useState<CustomHeader[]>([])
+  const [showCustomHeaders, setShowCustomHeaders] = useState<boolean>(false)
 
   const [records, setRecords] = useState<DNSRecord[]>([])
   const [error, setError] = useState<string | null>(null)
@@ -46,12 +55,76 @@ export default function DoHPlayground(props: DoHPlaygroundProps) {
     run()
   }, [error])
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('doh-custom-headers')
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved) as CustomHeader[]
+          if (parsed.length > 0) {
+            setCustomHeaders(parsed)
+            setShowCustomHeaders(true)
+          }
+        } catch {
+          // Ignore parse errors
+        }
+      }
+    }
+  }, [])
+
+  const saveHeaders = (headers: CustomHeader[]) => {
+    if (typeof window !== 'undefined') {
+      if (headers.length > 0) {
+        localStorage.setItem('doh-custom-headers', JSON.stringify(headers))
+      } else {
+        localStorage.removeItem('doh-custom-headers')
+      }
+    }
+  }
+
+  const addHeader = () => {
+    if (!showCustomHeaders) {
+      setShowCustomHeaders(true)
+    }
+    const newHeader: CustomHeader = { id: Date.now().toString(), name: '', value: '' }
+    const updated = [...customHeaders, newHeader]
+    setCustomHeaders(updated)
+    saveHeaders(updated)
+  }
+
+  const updateHeader = (id: string, field: 'name' | 'value', value: string) => {
+    const updated = customHeaders.map((h) => (h.id === id ? { ...h, [field]: value } : h))
+    setCustomHeaders(updated)
+    saveHeaders(updated)
+  }
+
+  const removeHeader = (id: string) => {
+    const updated = customHeaders.filter((h) => h.id !== id)
+    setCustomHeaders(updated)
+    saveHeaders(updated)
+    if (updated.length === 0) {
+      setShowCustomHeaders(false)
+    }
+  }
+
   const submitByClient = (type: DNSType, dnsService: string, domain: string, queryType: QueryType) => {
+    const headers =
+      customHeaders.length > 0
+        ? customHeaders.reduce(
+            (acc, h) => {
+              if (h.name && h.value) {
+                acc[h.name] = h.value
+              }
+              return acc
+            },
+            {} as Record<string, string>
+          )
+        : undefined
     switch (type) {
       case 'resolve':
-        return fetchDNSResolve(dnsService, domain, queryType)
+        return fetchDNSResolve(dnsService, domain, queryType, headers)
       case 'dns-query':
-        return fetchDNSQuery(dnsService, domain, queryType)
+        return fetchDNSQuery(dnsService, domain, queryType, headers)
       default:
         throw new Error('Invalid DNS type')
     }
@@ -66,14 +139,46 @@ export default function DoHPlayground(props: DoHPlaygroundProps) {
     try {
       setIsLoading(true)
       const dnsServiceDomain = extractDNSDomain(dnsService)
+      const headers =
+        customHeaders.length > 0
+          ? customHeaders.reduce(
+              (acc, h) => {
+                if (h.name && h.value) {
+                  acc[h.name] = h.value
+                }
+                return acc
+              },
+              {} as Record<string, string>
+            )
+          : undefined
       const fn = requestType === 'server' ? submit : submitByClient
-      const result = await fn(dnsType, dnsServiceDomain, domain, queryTypes)
+      const result = requestType === 'server' ? await fn(dnsType, dnsServiceDomain, domain, queryTypes, headers) : await fn(dnsType, dnsServiceDomain, domain, queryTypes)
       setRecords(result)
     } catch (error) {
       const message = stringifyUnknownError(error)
       setError(message)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const isDoHService = (value: string): boolean => {
+    const trimmed = value.trim().toLowerCase()
+    return trimmed.startsWith('https://')
+  }
+
+  const handleDNSServiceChange = (newValue: string) => {
+    setDNSService(newValue)
+    const trimmed = newValue.trim()
+
+    if (!trimmed) {
+      return
+    }
+
+    if (isDoHService(trimmed)) {
+      setDNSType('resolve')
+    } else {
+      setDNSType('dns-query')
     }
   }
 
@@ -117,7 +222,13 @@ export default function DoHPlayground(props: DoHPlaygroundProps) {
             <div className="grid gap-4 md:grid-cols-2">
               <label className="block text-left md:col-span-2">
                 <span className="text-sm font-medium text-slate-700">DNS service endpoint</span>
-                <input type="text" value={dnsService} onChange={(event) => setDNSService(event.target.value)} className={`${inputClass} mt-2`} placeholder="https://dns.google" />
+                <DNSInput
+                  value={dnsService}
+                  onChange={handleDNSServiceChange}
+                  onSelect={handleDNSServiceChange}
+                  className={`${inputClass} mt-2`}
+                  placeholder="https://dns.google or 1.1.1.1"
+                />
               </label>
 
               <FormSelect label="Interface type" value={dnsType} onChange={(next) => setDNSType(next as DNSType)} options={dnsTypeOptions} />
@@ -141,6 +252,70 @@ export default function DoHPlayground(props: DoHPlaygroundProps) {
                 <Switch className="shrink-0" options={switchOptions} value={requestType} onChange={(next) => setRequestType(next as RequestType)} />
               </div>
             </div>
+
+            {!showCustomHeaders || customHeaders.length === 0 ? (
+              <button
+                type="button"
+                onClick={addHeader}
+                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              >
+                + Add custom headers
+              </button>
+            ) : (
+              <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/80 p-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-slate-700">Custom headers</span>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={addHeader}
+                      className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
+                    >
+                      + Add header
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowCustomHeaders(false)
+                        setCustomHeaders([])
+                        saveHeaders([])
+                      }}
+                      className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-500 transition hover:bg-slate-50"
+                    >
+                      Hide
+                    </button>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  {customHeaders.map((header) => (
+                    <div key={header.id} className="flex gap-2">
+                      <CustomHeaderInput
+                        value={header.name}
+                        onChange={(value) => updateHeader(header.id, 'name', value)}
+                        onSelect={(value) => updateHeader(header.id, 'name', value)}
+                        className={`${inputClass} flex-1`}
+                        placeholder="Header key (e.g., X-DOH-API-KEY)"
+                      />
+                      <input
+                        type="text"
+                        value={header.value}
+                        onChange={(e) => updateHeader(header.id, 'value', e.target.value)}
+                        className={`${inputClass} flex-1`}
+                        placeholder="Header value (plaintext)"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeHeader(header.id)}
+                        className="rounded-lg border border-red-300 bg-white px-3 py-2.5 text-sm font-medium text-red-600 transition hover:bg-red-50"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-slate-500">Custom headers will be included in all DoH requests</p>
+              </div>
+            )}
 
             <button
               type="submit"

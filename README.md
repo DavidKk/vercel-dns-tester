@@ -46,6 +46,17 @@ You can try out the tool live at the following URL:
 2. **Custom Domain**  
    You can point your own domain to this service, and after configuration, use `https://your-domain/dns-query` as the DOH service endpoint.
 
+#### DoH Endpoint Security
+
+To protect your custom HOSTS configuration from unauthorized access, you can enable API key authentication:
+
+1. Set the `DOH_API_KEY` environment variable in Vercel
+2. The DoH endpoint will require either:
+   - **Header**: `X-DOH-API-KEY: your-api-key`
+   - **URL Parameter**: `?token=your-api-key` (for clients that don't support custom headers)
+
+**Note:** If `DOH_API_KEY` is not set, the endpoint will be publicly accessible (no authentication required).
+
 #### Custom HOSTS Configuration
 
 This service supports custom HOSTS records configuration through GitHub Gist:
@@ -100,6 +111,7 @@ Refer to the [`.env.example`](./.env.example) file to set up the necessary envir
 - `JWT_SECRET`: JWT secret key
 - `JWT_EXPIRES_IN`: JWT expiration time
 - `API_SECRET`: API secret key
+- `DOH_API_KEY`: (Optional) API key for protecting DoH endpoint. If set, clients must provide this key via `X-DOH-API-KEY` header or `?token=` URL parameter
 
 ## Quick Start
 

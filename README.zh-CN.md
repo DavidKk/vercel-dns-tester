@@ -46,6 +46,17 @@
 2. **自定义域名**  
    您可以将自己的域名指向该服务，配置完成后，使用 `https://您的域名/dns-query` 作为 DOH 服务端点。
 
+#### DoH 端点安全配置
+
+为了保护您的自定义 HOSTS 配置不被未授权访问，您可以启用 API 密钥认证：
+
+1. 在 Vercel 中设置 `DOH_API_KEY` 环境变量
+2. DoH 端点将要求以下任一认证方式：
+   - **请求头**：`X-DOH-API-KEY: your-api-key`
+   - **URL 参数**：`?token=your-api-key`（适用于不支持自定义请求头的客户端）
+
+**注意：** 如果未设置 `DOH_API_KEY`，端点将公开访问（无需认证）。
+
 #### 自定义 HOSTS 配置
 
 本服务支持通过 GitHub Gist 配置自定义的 HOSTS 记录：
@@ -100,6 +111,7 @@ curl -X DELETE \
 - `JWT_SECRET`: JWT 密钥。
 - `JWT_EXPIRES_IN`: JWT 过期时间。
 - `API_SECRET`: API 密钥。
+- `DOH_API_KEY`: （可选）用于保护 DoH 端点的 API 密钥。如果设置，客户端必须通过 `X-DOH-API-KEY` 请求头或 `?token=` URL 参数提供此密钥。
 
 ## 快速开始
 

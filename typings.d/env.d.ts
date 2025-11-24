@@ -16,5 +16,7 @@ declare namespace NodeJS {
     JWT_EXPIRES_IN: string
     /** API Secret */
     API_SECRET: string
+    /** DoH API Key (optional, for protecting DoH endpoint) */
+    DOH_API_KEY?: string
   }
 }

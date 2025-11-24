@@ -1,6 +1,8 @@
 import type { NextRequest } from 'next/server'
+import { NextResponse } from 'next/server'
 
 import { buffer } from '@/initializer/controller'
+import { checkDoHAccess } from '@/services/auth/access'
 import { setHeaders } from '@/services/context'
 import { convertToDNSMessage, parseDNSQuery } from '@/services/dns/dns-message'
 import { fetchDNSQuery } from '@/services/dns/fetch-dns-query'
@@ -10,6 +12,10 @@ import { getGistInfo, readGistFile } from '@/services/gist'
 import { GIST_HOSTS_FILE } from './constants'
 
 export const POST = buffer(async (req: NextRequest) => {
+  if (!checkDoHAccess(req)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   const buffer = await req.arrayBuffer()
   const { domain, queryType } = parseDNSQuery(new Uint8Array(buffer))
 

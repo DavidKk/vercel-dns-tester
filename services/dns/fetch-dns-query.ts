@@ -6,9 +6,11 @@ import { stringifyDNSType } from './utils'
  * Perform a DNS query using the DoH (DNS over HTTPS) `dns-query` endpoint.
  * @param dns - The DNS server to query (e.g., "dns.google").
  * @param domain - The domain name to resolve (e.g., "example.com").
+ * @param queryType - The DNS query type (e.g., "A", "AAAA").
+ * @param headers - Optional custom headers to include in the request.
  * @returns A parsed array of DNS records from the response.
  */
-export async function fetchDNSQuery(dns: string, domain: string, queryType: 'A' | 'AAAA'): Promise<DNSRecord[]> {
+export async function fetchDNSQuery(dns: string, domain: string, queryType: 'A' | 'AAAA', headers?: Record<string, string>): Promise<DNSRecord[]> {
   if (!dns || !domain) {
     throw new Error('DNS and domain are required')
   }
@@ -18,6 +20,7 @@ export async function fetchDNSQuery(dns: string, domain: string, queryType: 'A' 
     method: 'POST',
     headers: {
       'Content-Type': 'application/dns-message',
+      ...headers,
     },
     body: generateDNSMessage(domain, queryType),
   })

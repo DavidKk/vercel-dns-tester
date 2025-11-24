@@ -10,13 +10,15 @@ export interface DNSResolveResponse {
   }>
 }
 
-export async function fetchDNSResolve(dns: string, domain: string, queryType: QueryType): Promise<DNSRecord[]> {
+export async function fetchDNSResolve(dns: string, domain: string, queryType: QueryType, headers?: Record<string, string>): Promise<DNSRecord[]> {
   if (!dns || !domain) {
     throw new Error('DNS and domain are required')
   }
 
   const queryUrl = `https://${dns}/resolve?name=${domain}&type=${queryType}`
-  const response = await fetch(queryUrl)
+  const response = await fetch(queryUrl, {
+    headers,
+  })
   if (!response.ok) {
     throw new Error(`Failed: ${response.status}`)
   }
