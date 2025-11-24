@@ -3,6 +3,42 @@ import type { DNSRecord } from './types'
 import { stringifyDNSType } from './utils'
 
 /**
+ * Check if the DNS server supports OPTIONS preflight requests for CORS.
+ * This is a preflight check before making the actual POST request.
+ * Most DNS servers don't support OPTIONS, which will cause CORS preflight to fail.
+ * @param dns - The DNS server to check (e.g., "dns.google").
+ * @param headers - Optional custom headers that would be sent in the actual request.
+ * @returns True if OPTIONS is supported (server responds), false otherwise.
+ */
+export async function checkOptionsSupport(dns: string, headers?: Record<string, string>): Promise<boolean> {
+  try {
+    const queryUrl = `https://${dns}/dns-query`
+
+    // Build Access-Control-Request-Headers for preflight
+    const requestHeaders: string[] = ['content-type']
+    if (headers) {
+      requestHeaders.push(...Object.keys(headers).map((h) => h.toLowerCase()))
+    }
+
+    const response = await fetch(queryUrl, {
+      method: 'OPTIONS',
+      headers: {
+        'Access-Control-Request-Method': 'POST',
+        'Access-Control-Request-Headers': requestHeaders.join(', '),
+      },
+    })
+
+    // If OPTIONS returns 200-299, 204 (No Content), or 405 (Method Not Allowed), server responded
+    // 405 means the server understands OPTIONS but doesn't allow it, which still indicates support
+    // Network errors or CORS errors (caught in catch) mean OPTIONS is not supported
+    return response.status === 204 || (response.status >= 200 && response.status < 300) || response.status === 405
+  } catch {
+    // Network error, CORS error, or timeout means OPTIONS is not supported
+    return false
+  }
+}
+
+/**
  * Perform a DNS query using the DoH (DNS over HTTPS) `dns-query` endpoint.
  * @param dns - The DNS server to query (e.g., "dns.google").
  * @param domain - The domain name to resolve (e.g., "example.com").

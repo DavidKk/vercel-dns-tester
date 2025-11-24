@@ -9,7 +9,7 @@ import FormSelect from '@/components/FormSelect'
 import Switch from '@/components/Switch'
 import { useCountdown } from '@/hooks/useCountdown'
 import type { QueryType } from '@/services/dns'
-import { fetchDNSQuery, fetchDNSResolve, isDNSQueryType, isRequestType } from '@/services/dns'
+import { checkOptionsSupport, fetchDNSQuery, fetchDNSResolve, isDNSQueryType, isRequestType } from '@/services/dns'
 import type { DNSRecord, RequestType } from '@/services/dns/types'
 import { extractDNSDomain } from '@/utils/domain'
 import { stringifyUnknownError } from '@/utils/response'
@@ -33,7 +33,15 @@ export default function DoHPlayground(props: DoHPlaygroundProps) {
   const [dnsType, setDNSType] = useState<DNSType>(defaultDNSType && isDNSType(defaultDNSType) ? defaultDNSType : 'resolve')
   const [domain, setDomain] = useState<string>(defaultDomain || '')
   const [queryTypes, setQueryTypes] = useState<QueryType>(defaultQueryType && isDNSQueryType(defaultQueryType) ? defaultQueryType : 'A')
-  const [requestType, setRequestType] = useState<RequestType>(defaultRequestType && isRequestType(defaultRequestType) ? defaultRequestType : 'server')
+  const [requestType, setRequestType] = useState<RequestType>(() => {
+    // If default is dns-query and requestType is client, force to server
+    const defaultType = defaultDNSType && isDNSType(defaultDNSType) ? defaultDNSType : 'resolve'
+    const defaultReqType = defaultRequestType && isRequestType(defaultRequestType) ? defaultRequestType : 'server'
+    if (defaultType === 'dns-query' && defaultReqType === 'client') {
+      return 'server'
+    }
+    return defaultReqType
+  })
   interface CustomHeader {
     id: string
     name: string
@@ -72,6 +80,13 @@ export default function DoHPlayground(props: DoHPlaygroundProps) {
     }
   }, [])
 
+  // Auto switch to server when dns-query is selected and currently on client
+  useEffect(() => {
+    if (dnsType === 'dns-query' && requestType === 'client') {
+      setRequestType('server')
+    }
+  }, [dnsType, requestType])
+
   const saveHeaders = (headers: CustomHeader[]) => {
     if (typeof window !== 'undefined') {
       if (headers.length > 0) {
@@ -107,7 +122,7 @@ export default function DoHPlayground(props: DoHPlaygroundProps) {
     }
   }
 
-  const submitByClient = (type: DNSType, dnsService: string, domain: string, queryType: QueryType) => {
+  const submitByClient = async (type: DNSType, dnsService: string, domain: string, queryType: QueryType) => {
     const headers =
       customHeaders.length > 0
         ? customHeaders.reduce(
@@ -120,11 +135,19 @@ export default function DoHPlayground(props: DoHPlaygroundProps) {
             {} as Record<string, string>
           )
         : undefined
+
     switch (type) {
       case 'resolve':
         return fetchDNSResolve(dnsService, domain, queryType, headers)
-      case 'dns-query':
+      case 'dns-query': {
+        // Preflight OPTIONS check for DNS Query endpoint
+        // Most DNS servers don't support OPTIONS, so we check first
+        const supportsOptions = await checkOptionsSupport(dnsService, headers)
+        if (!supportsOptions) {
+          throw new Error('DNS server does not support OPTIONS preflight requests. Please use Server mode instead, or the DNS server may not support CORS.')
+        }
         return fetchDNSQuery(dnsService, domain, queryType, headers)
+      }
       default:
         throw new Error('Invalid DNS type')
     }
@@ -176,9 +199,15 @@ export default function DoHPlayground(props: DoHPlaygroundProps) {
     }
 
     if (isDoHService(trimmed)) {
-      setDNSType('resolve')
-    } else {
+      // HTTPS URL -> DNS Query endpoint
       setDNSType('dns-query')
+      // Auto switch to server if currently on client
+      if (requestType === 'client') {
+        setRequestType('server')
+      }
+    } else {
+      // IP address -> Resolve endpoint
+      setDNSType('resolve')
     }
   }
 
@@ -204,7 +233,15 @@ export default function DoHPlayground(props: DoHPlaygroundProps) {
     { label: 'Client', value: 'client', helper: 'Fetch directly from the browser' },
   ]
   const currentRequestMode = requestModes.find((mode) => mode.value === requestType)
-  const switchOptions = requestModes.map(({ label, value }) => ({ label, value }))
+  const switchOptions = requestModes.map(({ label, value }) => ({
+    label,
+    value,
+    disabled: dnsType === 'dns-query' && value === 'client',
+  }))
+  const switchTooltip =
+    dnsType === 'dns-query'
+      ? 'DNS Query endpoint requires Server mode due to CORS preflight limitations. Most DNS servers do not support OPTIONS requests from browsers.'
+      : undefined
 
   return (
     <section className="mx-auto w-full text-black">
@@ -231,7 +268,18 @@ export default function DoHPlayground(props: DoHPlaygroundProps) {
                 />
               </label>
 
-              <FormSelect label="Interface type" value={dnsType} onChange={(next) => setDNSType(next as DNSType)} options={dnsTypeOptions} />
+              <FormSelect
+                label="Interface type"
+                value={dnsType}
+                onChange={(next) => {
+                  setDNSType(next as DNSType)
+                  // Auto switch to server if dns-query is selected and currently on client
+                  if (next === 'dns-query' && requestType === 'client') {
+                    setRequestType('server')
+                  }
+                }}
+                options={dnsTypeOptions}
+              />
 
               <FormSelect label="Query type" value={queryTypes} onChange={(next) => setQueryTypes(next as QueryType)} options={queryTypeOptions} />
 
@@ -249,7 +297,14 @@ export default function DoHPlayground(props: DoHPlaygroundProps) {
                   <p className="text-sm font-medium text-slate-700">Request origin</p>
                   <p className="text-xs text-slate-500">{currentRequestMode?.helper}</p>
                 </div>
-                <Switch className="shrink-0" options={switchOptions} value={requestType} onChange={(next) => setRequestType(next as RequestType)} />
+                <Switch
+                  className="shrink-0"
+                  options={switchOptions}
+                  value={requestType}
+                  onChange={(next) => setRequestType(next as RequestType)}
+                  disabled={dnsType === 'dns-query'}
+                  tooltip={switchTooltip}
+                />
               </div>
             </div>
 

@@ -2,9 +2,12 @@
 
 import type { CSSProperties } from 'react'
 
+import Tooltip from './Tooltip'
+
 interface SwitchOption {
   label: string
   value: string
+  disabled?: boolean
 }
 
 export interface SwitchProps {
@@ -12,10 +15,12 @@ export interface SwitchProps {
   value: string
   onChange?(value: string): void
   className?: string
+  disabled?: boolean
+  tooltip?: string
 }
 
 export default function Switch(props: SwitchProps) {
-  const { options, value, onChange, className = '' } = props
+  const { options, value, onChange, className = '', disabled = false, tooltip } = props
 
   if (!options.length) {
     return null
@@ -25,10 +30,26 @@ export default function Switch(props: SwitchProps) {
     options.findIndex((option) => option.value === value),
     0
   )
-  const nextValue = options[(activeIndex + 1) % options.length]?.value ?? value
+
+  // Find next enabled option
+  const getNextEnabledValue = (currentIndex: number): string | null => {
+    for (let i = 1; i < options.length; i++) {
+      const nextIndex = (currentIndex + i) % options.length
+      const nextOption = options[nextIndex]
+      if (nextOption && !nextOption.disabled) {
+        return nextOption.value
+      }
+    }
+    return null
+  }
+
+  const nextValue = getNextEnabledValue(activeIndex)
 
   const handleToggle = () => {
-    if (nextValue !== value) {
+    if (disabled) {
+      return
+    }
+    if (nextValue && nextValue !== value) {
       onChange?.(nextValue)
     }
   }
@@ -44,26 +65,36 @@ export default function Switch(props: SwitchProps) {
   }
 
   return (
-    <div className={`inline-flex rounded-full border border-slate-200 bg-white p-1 text-xs font-semibold text-slate-500 shadow-inner ${className}`}>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={activeIndex === options.length - 1}
-        onClick={handleToggle}
-        className="relative inline-flex w-full select-none overflow-hidden rounded-full bg-white transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30"
+    <Tooltip content={tooltip || ''} position="top">
+      <div
+        className={`inline-flex rounded-full border border-slate-200 bg-white p-1 text-xs font-semibold text-slate-500 shadow-inner ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
       >
-        <span className="pointer-events-none absolute inset-y-0 rounded-full bg-slate-900 text-white shadow transition-all duration-200 ease-out" style={indicatorStyle} />
-        <span className="relative z-10 grid w-full" style={gridStyle}>
-          {options.map((option) => {
-            const isActive = option.value === value
-            return (
-              <span key={option.value} className={`px-4 py-1.5 text-center transition ${isActive ? 'text-white' : 'text-slate-500'}`}>
-                {option.label}
-              </span>
-            )
-          })}
-        </span>
-      </button>
-    </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={activeIndex === options.length - 1}
+          aria-disabled={disabled}
+          onClick={handleToggle}
+          disabled={disabled}
+          className={`relative inline-flex w-full select-none overflow-visible rounded-full bg-white transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30 ${disabled ? 'cursor-not-allowed' : ''}`}
+        >
+          <span className="pointer-events-none absolute inset-y-0 rounded-full bg-slate-900 text-white shadow transition-all duration-200 ease-out" style={indicatorStyle} />
+          <span className="relative z-10 grid w-full" style={gridStyle}>
+            {options.map((option) => {
+              const isActive = option.value === value
+              const isDisabled = option.disabled
+              return (
+                <span
+                  key={option.value}
+                  className={`px-4 py-1.5 text-center transition w-full ${isDisabled ? 'cursor-not-allowed opacity-50' : ''} ${isActive ? 'text-white' : 'text-slate-500'}`}
+                >
+                  {option.label}
+                </span>
+              )
+            })}
+          </span>
+        </button>
+      </div>
+    </Tooltip>
   )
 }
