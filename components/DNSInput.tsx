@@ -30,6 +30,15 @@ export default function DNSInput(props: DNSInputProps) {
   const options = useMemo(() => {
     const optionsList = [...COMMON_DNS_SERVERS]
 
+    // Add current project to suggestions if it's HTTPS
+    if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
+      const currentProjectUrl = `https://${window.location.host}`
+      const exists = optionsList.some((option) => option.value === currentProjectUrl)
+      if (!exists) {
+        optionsList.unshift({ label: window.location.hostname, value: currentProjectUrl })
+      }
+    }
+
     // Add current value to suggestions if it's an HTTPS URL not in the list
     if (value && value.startsWith('https://')) {
       const exists = optionsList.some((option) => option.value === value)

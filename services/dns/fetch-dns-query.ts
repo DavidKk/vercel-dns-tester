@@ -47,27 +47,58 @@ export async function checkOptionsSupport(dns: string, headers?: Record<string, 
  * @returns A parsed array of DNS records from the response.
  */
 export async function fetchDNSQuery(dns: string, domain: string, queryType: 'A' | 'AAAA', headers?: Record<string, string>): Promise<DNSRecord[]> {
+  // eslint-disable-next-line no-console
+  console.log('[fetchDNSQuery] Start:', { dns, domain, queryType, hasHeaders: !!headers })
+
   if (!dns || !domain) {
     throw new Error('DNS and domain are required')
   }
 
   const queryUrl = `https://${dns}/dns-query`
-  const response = await fetch(queryUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/dns-message',
-      ...headers,
-    },
-    body: generateDNSMessage(domain, queryType),
-  })
+  // eslint-disable-next-line no-console
+  console.log('[fetchDNSQuery] Query URL:', queryUrl)
 
-  if (!response.ok) {
-    throw new Error(`Failed: ${response.status}`)
+  const dnsMessage = generateDNSMessage(domain, queryType)
+  // eslint-disable-next-line no-console
+  console.log('[fetchDNSQuery] DNS message size:', dnsMessage.length, 'bytes')
+
+  try {
+    const response = await fetch(queryUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/dns-message',
+        ...headers,
+      },
+      body: dnsMessage as unknown as BodyInit,
+    })
+
+    // eslint-disable-next-line no-console
+    console.log('[fetchDNSQuery] Response status:', response.status, response.statusText)
+
+    if (!response.ok) {
+      // eslint-disable-next-line no-console
+      console.error('[fetchDNSQuery] Request failed:', response.status, response.statusText)
+      throw new Error(`Failed: ${response.status}`)
+    }
+
+    const data = await response.arrayBuffer()
+    // eslint-disable-next-line no-console
+    console.log('[fetchDNSQuery] Response buffer size:', data.byteLength, 'bytes')
+
+    const result = parseDNSResponse(data)
+    // eslint-disable-next-line no-console
+    console.log('[fetchDNSQuery] Parsed records count:', result.length)
+    // eslint-disable-next-line no-console
+    console.log('[fetchDNSQuery] Records:', JSON.stringify(result, null, 2))
+
+    return result
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('[fetchDNSQuery] Error:', error)
+    // eslint-disable-next-line no-console
+    console.error('[fetchDNSQuery] Error stack:', error instanceof Error ? error.stack : String(error))
+    throw error
   }
-
-  const data = await response.arrayBuffer()
-  const result = parseDNSResponse(data)
-  return result
 }
 
 /**
