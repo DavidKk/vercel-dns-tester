@@ -1,8 +1,7 @@
 import type { NextRequest } from 'next/server'
 
+import { testDNS } from '@/app/actions/test-dns'
 import { api } from '@/initializer/controller'
-
-import { testDNS } from './dns'
 
 export const POST = api(async (req: NextRequest) => {
   const { dnsService, domain, queryType } = await req.json()

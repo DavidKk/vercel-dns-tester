@@ -68,10 +68,10 @@ This service supports custom HOSTS records configuration through GitHub Gist:
    192.168.1.2 test.example.com
    ```
 
-2. Set the Gist ID in the tool's editor interface at `/editor`.
+2. Set the Gist ID in the tool's custom DNS interface at `/custom-dns`.
 3. After saving, your custom HOSTS records will be served through the DOH service.
 4. You can manage your HOSTS configurations through:
-   - Web Interface: Access `/editor` to manage configurations visually
+   - Web Interface: Access `/custom-dns` to manage configurations visually
    - API Interface: Use REST APIs with the following endpoints:
      - `PUT /api/hosts`: Add or update HOSTS records
      - `DELETE /api/hosts`: Remove HOSTS records

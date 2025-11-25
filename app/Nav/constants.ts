@@ -1,3 +1,3 @@
 export const DEFAULT_NAV = {
-  dns: [{ name: 'Editor', href: '/editor' }],
+  dns: [{ name: 'Custom DNS', href: '/custom-dns' }],
 }

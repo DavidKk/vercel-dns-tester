@@ -6,12 +6,12 @@ import Stackblitz from '@stackblitz/sdk'
 import { useRequest } from 'ahooks'
 import { useEffect, useRef, useState } from 'react'
 
+import { updateFiles } from '@/app/actions/custom-dns'
 import { Spinner } from '@/components/Spinner'
 
-import { updateFiles } from './actions'
 import { PACKAGE_FILE } from './constants'
 
-export interface EditorProps {
+export interface CustomDNSProps {
   files: Record<
     string,
     {
@@ -21,7 +21,7 @@ export interface EditorProps {
   >
 }
 
-export default function Editor(props: EditorProps) {
+export default function CustomDNS(props: CustomDNSProps) {
   const { files: inFiles } = props
   const editorRef = useRef<HTMLDivElement>(null)
   const [vm, setVM] = useState<VM>()

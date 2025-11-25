@@ -1,6 +1,7 @@
 import { headers } from 'next/headers'
 
-import { testDNS } from './api/test/dns'
+import { testDNS } from '@/app/actions/test-dns'
+
 import DoHPlayground from './DoHPlayground'
 
 async function getDefaultDNSService(): Promise<string> {

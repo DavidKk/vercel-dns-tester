@@ -68,10 +68,10 @@
    192.168.1.2 test.example.com
    ```
 
-2. 在工具的编辑器界面（`/editor`）中设置 Gist ID。
+2. 在工具的自定义 DNS 界面（`/custom-dns`）中设置 Gist ID。
 3. 保存后，您的自定义 HOSTS 记录将通过 DOH 服务下发。
 4. 您可以通过以下方式管理 HOSTS 配置：
-   - Web 界面：访问 `/editor` 可视化管理配置
+   - Web 界面：访问 `/custom-dns` 可视化管理配置
    - API 接口：使用 REST APIs，包含以下端点：
      - `PUT /api/hosts`：添加或更新 HOSTS 记录
      - `DELETE /api/hosts`：删除 HOSTS 记录
