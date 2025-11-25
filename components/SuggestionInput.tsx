@@ -103,8 +103,13 @@ export default function SuggestionInput(props: SuggestionInputProps) {
   }, [highlightedIndex])
 
   return (
-    <div className={classNames('relative', className)}>
-      <div className="relative flex w-full items-center">
+    <div
+      className={classNames(
+        'relative w-full rounded-lg border border-slate-200 bg-white text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20',
+        className
+      )}
+    >
+      <div className="relative flex w-full items-center gap-2">
         <input
           ref={inputRef}
           type="text"
@@ -112,10 +117,12 @@ export default function SuggestionInput(props: SuggestionInputProps) {
           onChange={handleInputChange}
           onFocus={() => setIsOpen(true)}
           onKeyDown={handleKeyDown}
-          className={`w-full border-none outline-none focus:outline-none focus:ring-0 active:outline-none active:ring-0 hover:outline-none hover:ring-0 ${suffix ? 'pr-10' : ''}`}
+          className={classNames('w-full border-none px-4 py-2.5 outline-none focus:outline-none focus:ring-0 active:outline-none active:ring-0 hover:outline-none hover:ring-0', {
+            'pr-0': suffix,
+          })}
           {...rest}
         />
-        {suffix && <div className="absolute right-3 top-0 bottom-0 flex items-center justify-center pointer-events-none">{suffix}</div>}
+        {suffix && <div className="pr-3 flex items-center justify-center">{suffix}</div>}
       </div>
       {isOpen && filteredOptions.length > 0 && (
         <ul ref={listRef} className="absolute left-0 top-[100%] z-50 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-slate-200 bg-white shadow-lg" role="listbox">

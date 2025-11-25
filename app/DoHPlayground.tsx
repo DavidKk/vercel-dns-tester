@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from 'react'
 import CustomHeaderInput from '@/components/CustomHeaderInput'
 import DNSInput from '@/components/DNSInput'
 import FormSelect from '@/components/FormSelect'
+import Input from '@/components/Input'
 import Switch from '@/components/Switch'
 import Tooltip from '@/components/Tooltip'
 import { useCountdown } from '@/hooks/useCountdown'
@@ -232,9 +233,6 @@ export default function DoHPlayground(props: DoHPlaygroundProps) {
     }
   }
 
-  const inputClass =
-    'w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20'
-
   const dnsTypeOptions: { label: string; value: DNSType; disabled?: boolean }[] = useMemo(
     () => [
       { label: 'Resolve endpoint', value: 'resolve', disabled: isSelfService },
@@ -304,10 +302,10 @@ export default function DoHPlayground(props: DoHPlaygroundProps) {
                     value={dnsService}
                     onChange={handleDNSServiceChange}
                     onSelect={handleDNSServiceChange}
-                    className={`${inputClass} ${!dnsServiceValidation.isValid ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' : ''}`}
+                    className={`${!dnsServiceValidation.isValid ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' : ''}`}
                     placeholder="https://dns.google or 1.1.1.1"
                     suffix={
-                      isSelfService ? (
+                      true ? (
                         <Tooltip content="Custom header x-doh-api-key can be used for private DNS" position="top">
                           <div className="cursor-help text-slate-400 hover:text-slate-600">
                             <FeatherIcon icon="info" size={20} />
@@ -316,7 +314,7 @@ export default function DoHPlayground(props: DoHPlaygroundProps) {
                       ) : undefined
                     }
                   />
-                  {dnsService && (
+                  {true && (
                     <p className={`text-xs ${dnsServiceValidation.isValid ? 'text-slate-500' : 'text-red-600'}`}>
                       {dnsServiceValidation.message || 'Consider using system default DNS if available'}
                     </p>
@@ -339,10 +337,7 @@ export default function DoHPlayground(props: DoHPlaygroundProps) {
                 <FormSelect label="Query type" value={queryTypes} onChange={(next) => setQueryTypes(next as QueryType)} options={queryTypeOptions} />
 
                 <div className="md:col-span-2">
-                  <label className="flex flex-col gap-2 text-left">
-                    <span className="text-sm font-medium text-slate-700">Domain to test</span>
-                    <input type="text" value={domain} onChange={(event) => setDomain(event.target.value)} className={inputClass} placeholder="example.com" />
-                  </label>
+                  <Input label="Domain to test" type="text" value={domain} onChange={(event) => setDomain(event.target.value)} placeholder="example.com" />
                 </div>
               </div>
 
@@ -403,14 +398,14 @@ export default function DoHPlayground(props: DoHPlaygroundProps) {
                           value={header.name}
                           onChange={(value) => updateHeader(header.id, 'name', value)}
                           onSelect={(value) => updateHeader(header.id, 'name', value)}
-                          className={`${inputClass} flex-1`}
+                          className="flex-1"
                           placeholder="Header key (e.g., X-DOH-API-KEY)"
                         />
-                        <input
+                        <Input
                           type="text"
                           value={header.value}
                           onChange={(e) => updateHeader(header.id, 'value', e.target.value)}
-                          className={`${inputClass} flex-1`}
+                          className="flex-1"
                           placeholder="Header value (plaintext)"
                         />
                         <button
