@@ -1,8 +1,19 @@
+import { headers } from 'next/headers'
+
 import { testDNS } from './api/test/dns'
 import DoHPlayground from './DoHPlayground'
 
 async function getDefaultDNSService(): Promise<string> {
-  // Always use Google DNS as default
+  const headersList = await headers()
+  const host = headersList.get('host')
+  const protocol = headersList.get('x-forwarded-proto') || 'http'
+
+  // If current service is HTTPS, use self as default
+  if (protocol === 'https' && host) {
+    return `https://${host}`
+  }
+
+  // Otherwise use Google DNS as default
   return 'https://dns.google'
 }
 

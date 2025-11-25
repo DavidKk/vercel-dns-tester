@@ -1,6 +1,6 @@
 'use client'
 
-import type { ComponentProps, KeyboardEvent } from 'react'
+import type { ComponentProps, KeyboardEvent, ReactNode } from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 export interface SuggestionInputOption {
@@ -15,10 +15,11 @@ export interface SuggestionInputProps extends Omit<ComponentProps<'input'>, 'onC
   onChange(value: string): void
   onSelect?(value: string): void
   maxResults?: number
+  suffix?: ReactNode
 }
 
 export default function SuggestionInput(props: SuggestionInputProps) {
-  const { options, value, onChange, onSelect, maxResults = 10, className = '', ...rest } = props
+  const { options, value, onChange, onSelect, maxResults = 10, className = '', suffix, ...rest } = props
   const [isOpen, setIsOpen] = useState(false)
   const [highlightedIndex, setHighlightedIndex] = useState(-1)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -101,8 +102,20 @@ export default function SuggestionInput(props: SuggestionInputProps) {
   }, [highlightedIndex])
 
   return (
-    <div className="relative">
-      <input ref={inputRef} type="text" value={value} onChange={handleInputChange} onFocus={() => setIsOpen(true)} onKeyDown={handleKeyDown} className={className} {...rest} />
+    <div className={`relative ${className}`}>
+      <div className="relative flex items-center">
+        <input
+          ref={inputRef}
+          type="text"
+          value={value}
+          onChange={handleInputChange}
+          onFocus={() => setIsOpen(true)}
+          onKeyDown={handleKeyDown}
+          className={`${suffix ? 'pr-10' : ''}`}
+          {...rest}
+        />
+        {suffix && <div className="absolute top-0 bottom-0 right-0 flex items-center justify-center">{suffix}</div>}
+      </div>
       {isOpen && filteredOptions.length > 0 && (
         <ul ref={listRef} className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-slate-200 bg-white shadow-lg" role="listbox">
           {filteredOptions.map((option, index) => (

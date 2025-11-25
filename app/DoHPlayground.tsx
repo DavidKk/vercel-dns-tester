@@ -1,12 +1,14 @@
 'use client'
 
+import FeatherIcon from 'feather-icons-react'
 import type { FormEvent } from 'react'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import CustomHeaderInput from '@/components/CustomHeaderInput'
 import DNSInput from '@/components/DNSInput'
 import FormSelect from '@/components/FormSelect'
 import Switch from '@/components/Switch'
+import Tooltip from '@/components/Tooltip'
 import { useCountdown } from '@/hooks/useCountdown'
 import type { QueryType } from '@/services/dns'
 import { checkOptionsSupport, fetchDNSQuery, fetchDNSResolve, isDNSQueryType, isRequestType } from '@/services/dns'
@@ -86,6 +88,15 @@ export default function DoHPlayground(props: DoHPlaygroundProps) {
       setRequestType('server')
     }
   }, [dnsType, requestType])
+
+  // Check if current DNS service is self (current project)
+  const isSelfService = useMemo(() => {
+    if (typeof window === 'undefined' || !dnsService) {
+      return false
+    }
+    const currentProjectUrl = `https://${window.location.host}`
+    return dnsService === currentProjectUrl || dnsService.startsWith(currentProjectUrl)
+  }, [dnsService])
 
   const saveHeaders = (headers: CustomHeader[]) => {
     if (typeof window !== 'undefined') {
@@ -265,6 +276,15 @@ export default function DoHPlayground(props: DoHPlaygroundProps) {
                   onSelect={handleDNSServiceChange}
                   className={`${inputClass} mt-2`}
                   placeholder="https://dns.google or 1.1.1.1"
+                  suffix={
+                    isSelfService ? (
+                      <Tooltip content="Custom header x-doh-api-key can be used for private DNS" position="top">
+                        <div className="cursor-help text-slate-400 hover:text-slate-600">
+                          <FeatherIcon icon="info" size={20} />
+                        </div>
+                      </Tooltip>
+                    ) : undefined
+                  }
                 />
               </label>
 

@@ -1,6 +1,6 @@
 'use client'
 
-import type { ComponentProps } from 'react'
+import type { ComponentProps, ReactNode } from 'react'
 import { useMemo } from 'react'
 
 import SuggestionInput, { type SuggestionInputOption } from './SuggestionInput'
@@ -22,10 +22,11 @@ export interface DNSInputProps extends Omit<ComponentProps<'input'>, 'onChange' 
   value: string
   onChange(value: string): void
   onSelect?(value: string): void
+  suffix?: ReactNode
 }
 
 export default function DNSInput(props: DNSInputProps) {
-  const { value, onChange, onSelect, className = '', ...rest } = props
+  const { value, onChange, onSelect, className = '', suffix, ...rest } = props
 
   const options = useMemo(() => {
     const optionsList = [...COMMON_DNS_SERVERS]
@@ -57,5 +58,5 @@ export default function DNSInput(props: DNSInputProps) {
     return optionsList
   }, [value])
 
-  return <SuggestionInput options={options} value={value} onChange={onChange} onSelect={onSelect} className={className} {...rest} />
+  return <SuggestionInput options={options} value={value} onChange={onChange} onSelect={onSelect} className={className} suffix={suffix} {...rest} />
 }
