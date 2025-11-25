@@ -9,7 +9,6 @@ import DNSInput from '@/components/DNSInput'
 import FormSelect from '@/components/FormSelect'
 import Input from '@/components/Input'
 import Switch from '@/components/Switch'
-import Tooltip from '@/components/Tooltip'
 import { useCountdown } from '@/hooks/useCountdown'
 import type { QueryType } from '@/services/dns'
 import { checkOptionsSupport, fetchDNSQuery, fetchDNSResolve, isDNSQueryType, isRequestType } from '@/services/dns'
@@ -27,11 +26,22 @@ export interface DoHPlaygroundProps {
   domain?: string
   queryType?: string
   requestType?: string
+  isAuthenticated?: boolean
+  dohApiKey?: string | null
   submit(dnsType: DNSType, dnsService: string, domain: string, queryType: QueryType, headers?: Record<string, string>): Promise<DNSRecord[]>
 }
 
 export default function DoHPlayground(props: DoHPlaygroundProps) {
-  const { dnsService: defaultDNSService, dnsType: defaultDNSType, domain: defaultDomain, queryType: defaultQueryType, requestType: defaultRequestType, submit } = props
+  const {
+    dnsService: defaultDNSService,
+    dnsType: defaultDNSType,
+    domain: defaultDomain,
+    queryType: defaultQueryType,
+    requestType: defaultRequestType,
+    isAuthenticated: initialIsAuthenticated = false,
+    dohApiKey: initialDohApiKey = null,
+    submit,
+  } = props
 
   const [dnsService, setDNSService] = useState<string>(defaultDNSService || '')
   const [dnsType, setDNSType] = useState<DNSType>(defaultDNSType && isDNSType(defaultDNSType) ? defaultDNSType : 'resolve')
@@ -67,23 +77,6 @@ export default function DoHPlayground(props: DoHPlaygroundProps) {
     run()
   }, [error])
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('doh-custom-headers')
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved) as CustomHeader[]
-          if (parsed.length > 0) {
-            setCustomHeaders(parsed)
-            setShowCustomHeaders(true)
-          }
-        } catch {
-          // Ignore parse errors
-        }
-      }
-    }
-  }, [])
-
   // Check if current DNS service is self (current project)
   const isSelfService = useMemo(() => {
     if (typeof window === 'undefined' || !dnsService) {
@@ -107,39 +100,53 @@ export default function DoHPlayground(props: DoHPlaygroundProps) {
     }
   }, [isSelfService, dnsType])
 
-  const saveHeaders = (headers: CustomHeader[]) => {
-    if (typeof window !== 'undefined') {
-      if (headers.length > 0) {
-        localStorage.setItem('doh-custom-headers', JSON.stringify(headers))
-      } else {
-        localStorage.removeItem('doh-custom-headers')
-      }
+  // Auto add x-doh-api-key header when authenticated and using self service
+  useEffect(() => {
+    if (isSelfService && initialIsAuthenticated && initialDohApiKey) {
+      setCustomHeaders((prev) => {
+        const apiKeyHeader = prev.find((h) => h.name === 'x-doh-api-key')
+        if (!apiKeyHeader) {
+          const newHeader: CustomHeader = { id: 'auto-doh-api-key', name: 'x-doh-api-key', value: initialDohApiKey }
+          setShowCustomHeaders(true)
+          return [...prev, newHeader]
+        } else if (apiKeyHeader.value !== initialDohApiKey) {
+          // Update if value changed
+          return prev.map((h) => (h.id === 'auto-doh-api-key' ? { ...h, value: initialDohApiKey } : h))
+        }
+        return prev
+      })
+    } else {
+      // Remove auto-added header when conditions are not met
+      setCustomHeaders((prev) => {
+        const filtered = prev.filter((h) => h.id !== 'auto-doh-api-key')
+        if (filtered.length === 0 && prev.length > 0) {
+          setShowCustomHeaders(false)
+        }
+        return filtered
+      })
     }
-  }
+  }, [isSelfService, initialIsAuthenticated, initialDohApiKey])
 
   const addHeader = () => {
     if (!showCustomHeaders) {
       setShowCustomHeaders(true)
     }
     const newHeader: CustomHeader = { id: Date.now().toString(), name: '', value: '' }
-    const updated = [...customHeaders, newHeader]
-    setCustomHeaders(updated)
-    saveHeaders(updated)
+    setCustomHeaders((prev) => [...prev, newHeader])
   }
 
   const updateHeader = (id: string, field: 'name' | 'value', value: string) => {
-    const updated = customHeaders.map((h) => (h.id === id ? { ...h, [field]: value } : h))
-    setCustomHeaders(updated)
-    saveHeaders(updated)
+    setCustomHeaders((prev) => prev.map((h) => (h.id === id ? { ...h, [field]: value } : h)))
   }
 
   const removeHeader = (id: string) => {
-    const updated = customHeaders.filter((h) => h.id !== id)
-    setCustomHeaders(updated)
-    saveHeaders(updated)
-    if (updated.length === 0) {
-      setShowCustomHeaders(false)
-    }
+    setCustomHeaders((prev) => {
+      const filtered = prev.filter((h) => h.id !== id)
+      if (filtered.length === 0) {
+        setShowCustomHeaders(false)
+      }
+      return filtered
+    })
   }
 
   const submitByClient = async (type: DNSType, dnsService: string, domain: string, queryType: QueryType) => {
@@ -273,18 +280,10 @@ export default function DoHPlayground(props: DoHPlaygroundProps) {
     [requestModes, dnsType]
   )
 
-  const switchTooltip = useMemo(
-    () =>
-      dnsType === 'dns-query'
-        ? 'DNS Query endpoint requires Server mode due to CORS preflight limitations. Most DNS servers do not support OPTIONS requests from browsers.'
-        : undefined,
-    [dnsType]
-  )
-
   return (
     <section className="mx-auto w-full text-black">
       <div className="flex flex-col gap-6">
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-lg shadow-slate-200/60">
+        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-lg shadow-slate-200/60">
           <div className="flex flex-col gap-6">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
@@ -304,20 +303,17 @@ export default function DoHPlayground(props: DoHPlaygroundProps) {
                     onSelect={handleDNSServiceChange}
                     className={`${!dnsServiceValidation.isValid ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' : ''}`}
                     placeholder="https://dns.google or 1.1.1.1"
-                    suffix={
-                      true ? (
-                        <Tooltip content="Custom header x-doh-api-key can be used for private DNS" position="top">
-                          <div className="cursor-help text-slate-400 hover:text-slate-600">
-                            <FeatherIcon icon="info" size={20} />
-                          </div>
-                        </Tooltip>
-                      ) : undefined
-                    }
                   />
-                  {true && (
+                  {dnsService && (
                     <p className={`text-xs ${dnsServiceValidation.isValid ? 'text-slate-500' : 'text-red-600'}`}>
                       {dnsServiceValidation.message || 'Consider using system default DNS if available'}
                     </p>
+                  )}
+                  {isSelfService && (
+                    <div className="flex items-center gap-2 rounded-lg border border-yellow-300 bg-yellow-50 px-3 py-2">
+                      <FeatherIcon icon="info" size={16} className="flex-shrink-0 text-yellow-600" />
+                      <p className="flex-1 text-xs text-yellow-800">Custom header x-doh-api-key can be used for private DNS</p>
+                    </div>
                   )}
                 </label>
 
@@ -341,7 +337,7 @@ export default function DoHPlayground(props: DoHPlaygroundProps) {
                 </div>
               </div>
 
-              <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4">
+              <div className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-slate-50/80 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div className="flex min-w-[220px] flex-1 flex-col gap-1">
                     <p className="text-sm font-medium text-slate-700">Request origin</p>
@@ -353,9 +349,16 @@ export default function DoHPlayground(props: DoHPlaygroundProps) {
                     value={requestType}
                     onChange={(next) => setRequestType(next as RequestType)}
                     disabled={dnsType === 'dns-query'}
-                    tooltip={switchTooltip}
                   />
                 </div>
+                {dnsType === 'dns-query' && (
+                  <div className="flex items-center gap-2 rounded-lg border border-yellow-300 bg-yellow-50 px-3 py-2">
+                    <FeatherIcon icon="alert-triangle" size={16} className="flex-shrink-0 text-yellow-600" />
+                    <p className="flex-1 text-xs text-yellow-800">
+                      DNS Query endpoint requires Server mode due to CORS preflight limitations. Most DNS servers do not support OPTIONS requests from browsers.
+                    </p>
+                  </div>
+                )}
               </div>
 
               {!showCustomHeaders || customHeaders.length === 0 ? (
@@ -367,7 +370,7 @@ export default function DoHPlayground(props: DoHPlaygroundProps) {
                   + Add custom headers
                 </button>
               ) : (
-                <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50/80 p-4">
+                <div className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-slate-50/80 p-4">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-slate-700">Custom headers</span>
                     <div className="flex gap-2">
@@ -383,7 +386,6 @@ export default function DoHPlayground(props: DoHPlaygroundProps) {
                         onClick={() => {
                           setShowCustomHeaders(false)
                           setCustomHeaders([])
-                          saveHeaders([])
                         }}
                         className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-500 transition hover:bg-slate-50"
                       >
@@ -424,7 +426,7 @@ export default function DoHPlayground(props: DoHPlaygroundProps) {
 
               <button
                 type="submit"
-                className="w-full rounded-xl bg-indigo-500 py-3 text-base font-semibold text-white shadow-lg shadow-indigo-500/30 transition hover:bg-indigo-600 hover:shadow-indigo-500/40"
+                className="w-full rounded-lg bg-indigo-500 py-3 text-base font-semibold text-white shadow-lg shadow-indigo-500/30 transition hover:bg-indigo-600 hover:shadow-indigo-500/40"
               >
                 Run test
               </button>

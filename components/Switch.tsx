@@ -2,8 +2,6 @@
 
 import type { CSSProperties } from 'react'
 
-import Tooltip from './Tooltip'
-
 interface SwitchOption {
   label: string
   value: string
@@ -16,11 +14,10 @@ export interface SwitchProps {
   onChange?(value: string): void
   className?: string
   disabled?: boolean
-  tooltip?: string
 }
 
 export default function Switch(props: SwitchProps) {
-  const { options, value, onChange, className = '', disabled = false, tooltip } = props
+  const { options, value, onChange, className = '', disabled = false } = props
 
   if (!options.length) {
     return null
@@ -65,36 +62,34 @@ export default function Switch(props: SwitchProps) {
   }
 
   return (
-    <Tooltip content={tooltip || ''} position="top">
-      <div
-        className={`inline-flex rounded-full border border-slate-200 bg-white p-1 text-xs font-semibold text-slate-500 shadow-inner ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
+    <div
+      className={`inline-flex rounded-full border border-slate-200 bg-white p-1 text-xs font-semibold text-slate-500 shadow-inner ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
+    >
+      <button
+        type="button"
+        role="switch"
+        aria-checked={activeIndex === options.length - 1}
+        aria-disabled={disabled}
+        onClick={handleToggle}
+        disabled={disabled}
+        className={`relative inline-flex w-full select-none overflow-visible rounded-full bg-white transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30 ${disabled ? 'cursor-not-allowed' : ''}`}
       >
-        <button
-          type="button"
-          role="switch"
-          aria-checked={activeIndex === options.length - 1}
-          aria-disabled={disabled}
-          onClick={handleToggle}
-          disabled={disabled}
-          className={`relative inline-flex w-full select-none overflow-visible rounded-full bg-white transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30 ${disabled ? 'cursor-not-allowed' : ''}`}
-        >
-          <span className="pointer-events-none absolute inset-y-0 rounded-full bg-slate-900 text-white shadow transition-all duration-200 ease-out" style={indicatorStyle} />
-          <span className="relative z-10 grid w-full" style={gridStyle}>
-            {options.map((option) => {
-              const isActive = option.value === value
-              const isDisabled = option.disabled
-              return (
-                <span
-                  key={option.value}
-                  className={`px-4 py-1.5 text-center transition w-full ${isDisabled ? 'cursor-not-allowed opacity-50' : ''} ${isActive ? 'text-white' : 'text-slate-500'}`}
-                >
-                  {option.label}
-                </span>
-              )
-            })}
-          </span>
-        </button>
-      </div>
-    </Tooltip>
+        <span className="pointer-events-none absolute inset-y-0 rounded-full bg-slate-900 text-white shadow transition-all duration-200 ease-out" style={indicatorStyle} />
+        <span className="relative z-10 grid w-full" style={gridStyle}>
+          {options.map((option) => {
+            const isActive = option.value === value
+            const isDisabled = option.disabled
+            return (
+              <span
+                key={option.value}
+                className={`px-4 py-1.5 text-center transition w-full ${isDisabled ? 'cursor-not-allowed opacity-50' : ''} ${isActive ? 'text-white' : 'text-slate-500'}`}
+              >
+                {option.label}
+              </span>
+            )
+          })}
+        </span>
+      </button>
+    </div>
   )
 }

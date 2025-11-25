@@ -1,5 +1,7 @@
 import { headers } from 'next/headers'
 
+import { validateCookie } from '@/services/auth/access'
+
 import { testDNS } from './api/test/dns'
 import DoHPlayground from './DoHPlayground'
 
@@ -19,6 +21,8 @@ async function getDefaultDNSService(): Promise<string> {
 
 export default async function Home() {
   const defaultDNSService = await getDefaultDNSService()
+  const isAuthenticated = await validateCookie()
+  const dohApiKey = isAuthenticated ? process.env.DOH_API_KEY || null : null
 
   const defaults = {
     dnsService: defaultDNSService,
@@ -40,7 +44,14 @@ export default async function Home() {
           </div>
         </header>
 
-        <DoHPlayground dnsService={defaults.dnsService} domain={defaults.domain} queryType={defaults.queryType} submit={testDNS} />
+        <DoHPlayground
+          dnsService={defaults.dnsService}
+          domain={defaults.domain}
+          queryType={defaults.queryType}
+          submit={testDNS}
+          isAuthenticated={isAuthenticated}
+          dohApiKey={dohApiKey}
+        />
       </section>
     </main>
   )
