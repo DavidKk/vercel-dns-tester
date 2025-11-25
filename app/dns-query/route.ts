@@ -12,6 +12,28 @@ import { isSelfRequest } from '@/utils/request'
 
 import { GIST_HOSTS_FILE } from './constants'
 
+function resolveUpstreamDNS(value?: string | null): string | null {
+  if (!value) {
+    return null
+  }
+
+  const trimmed = value.trim()
+  if (!trimmed) {
+    return null
+  }
+
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    try {
+      const url = new URL(trimmed)
+      return url.host
+    } catch {
+      return null
+    }
+  }
+
+  return trimmed
+}
+
 export const POST = buffer(async (req: NextRequest) => {
   const hasAccess = checkDoHAccess(req)
   const isSelf = isSelfRequest(req)
@@ -22,13 +44,11 @@ export const POST = buffer(async (req: NextRequest) => {
   }
 
   const requestBuffer = await req.arrayBuffer()
-  // eslint-disable-next-line no-console
-  console.log('[dns-query] Request buffer size:', requestBuffer.byteLength)
+  const upstreamFromHeader = resolveUpstreamDNS(req.headers.get('x-dns-upstream'))
+  const upstreamDNS = upstreamFromHeader || '1.1.1.1'
 
   try {
     const { domain, queryType } = parseDNSQuery(new Uint8Array(requestBuffer))
-    // eslint-disable-next-line no-console
-    console.log('[dns-query] Parsed domain:', domain, 'queryType:', queryType)
 
     let records: Awaited<ReturnType<typeof fetchDNSQuery>> = []
 
@@ -39,26 +59,13 @@ export const POST = buffer(async (req: NextRequest) => {
       const hostsRecords = hostsToDNSRecords(hostsContent)
       const filterdHostsRecords = hostsRecords.filter((record) => record.name === domain && record.type === queryType)
       records = filterdHostsRecords
-      // eslint-disable-next-line no-console
-      console.log('[dns-query] Hosts records count:', filterdHostsRecords.length)
     }
 
-    // Always include fallback records from 1.1.1.1
-    // eslint-disable-next-line no-console
-    console.log('[dns-query] Fetching fallback records from 1.1.1.1')
-    const fallbackRecords = await fetchDNSQuery('1.1.1.1', domain, queryType)
-    // eslint-disable-next-line no-console
-    console.log('[dns-query] Fallback records count:', fallbackRecords.length)
+    // Always include fallback records from upstream DNS (default 1.1.1.1)
+    const fallbackRecords = await fetchDNSQuery(upstreamDNS, domain, queryType)
 
     const combinedRecords = [...records, ...fallbackRecords]
-    // eslint-disable-next-line no-console
-    console.log('[dns-query] Combined records count:', combinedRecords.length)
-    // eslint-disable-next-line no-console
-    console.log('[dns-query] Records:', JSON.stringify(combinedRecords, null, 2))
-
     const combinedResponse = convertToDNSMessage(combinedRecords)
-    // eslint-disable-next-line no-console
-    console.log('[dns-query] Response buffer size:', combinedResponse.byteLength)
 
     setHeaders({
       'Content-Type': 'application/dns-message',

@@ -109,14 +109,10 @@ export function convertToDNSMessage(records: DNSRecord[]): ArrayBuffer {
       }
     }
     const totalRecordSize = nameSize + fixedSize + dataSize
-    // eslint-disable-next-line no-console
-    console.log('[convertToDNSMessage] Record:', record.name, record.type, 'nameSize:', nameSize, 'dataSize:', dataSize, 'total:', totalRecordSize)
     return totalRecordSize
   })
 
   const totalSize = headerSize + questionSize + recordSizes.reduce((a, b) => a + b, 0)
-  // eslint-disable-next-line no-console
-  console.log('[convertToDNSMessage] Total size:', totalSize, 'records count:', records.length)
   const buffer = new ArrayBuffer(totalSize)
   const view = new DataView(buffer)
   let offset = 0
