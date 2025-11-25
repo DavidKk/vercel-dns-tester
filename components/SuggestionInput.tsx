@@ -1,5 +1,6 @@
 'use client'
 
+import classNames from 'classnames'
 import type { ComponentProps, KeyboardEvent, ReactNode } from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
@@ -102,8 +103,8 @@ export default function SuggestionInput(props: SuggestionInputProps) {
   }, [highlightedIndex])
 
   return (
-    <div className={`relative ${className}`}>
-      <div className="relative flex items-center">
+    <div className={classNames('relative', className)}>
+      <div className="relative flex w-full items-center">
         <input
           ref={inputRef}
           type="text"
@@ -111,13 +112,13 @@ export default function SuggestionInput(props: SuggestionInputProps) {
           onChange={handleInputChange}
           onFocus={() => setIsOpen(true)}
           onKeyDown={handleKeyDown}
-          className={`${suffix ? 'pr-10' : ''}`}
+          className={`w-full border-none outline-none focus:outline-none focus:ring-0 active:outline-none active:ring-0 hover:outline-none hover:ring-0 ${suffix ? 'pr-10' : ''}`}
           {...rest}
         />
-        {suffix && <div className="absolute top-0 bottom-0 right-0 flex items-center justify-center">{suffix}</div>}
+        {suffix && <div className="absolute right-3 top-0 bottom-0 flex items-center justify-center pointer-events-none">{suffix}</div>}
       </div>
       {isOpen && filteredOptions.length > 0 && (
-        <ul ref={listRef} className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-slate-200 bg-white shadow-lg" role="listbox">
+        <ul ref={listRef} className="absolute left-0 top-[100%] z-50 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-slate-200 bg-white shadow-lg" role="listbox">
           {filteredOptions.map((option, index) => (
             <li
               key={option.value}

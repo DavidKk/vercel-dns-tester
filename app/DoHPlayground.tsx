@@ -15,6 +15,7 @@ import { checkOptionsSupport, fetchDNSQuery, fetchDNSResolve, isDNSQueryType, is
 import type { DNSRecord, RequestType } from '@/services/dns/types'
 import { extractDNSDomain } from '@/utils/domain'
 import { stringifyUnknownError } from '@/utils/response'
+import { validateDNSService } from '@/utils/validators'
 
 import { type DNSType, isDNSType } from './api/test/types'
 import DNSResultsPanel from './DNSResultsPanel'
@@ -82,13 +83,6 @@ export default function DoHPlayground(props: DoHPlaygroundProps) {
     }
   }, [])
 
-  // Auto switch to server when dns-query is selected and currently on client
-  useEffect(() => {
-    if (dnsType === 'dns-query' && requestType === 'client') {
-      setRequestType('server')
-    }
-  }, [dnsType, requestType])
-
   // Check if current DNS service is self (current project)
   const isSelfService = useMemo(() => {
     if (typeof window === 'undefined' || !dnsService) {
@@ -97,6 +91,20 @@ export default function DoHPlayground(props: DoHPlaygroundProps) {
     const currentProjectUrl = `https://${window.location.host}`
     return dnsService === currentProjectUrl || dnsService.startsWith(currentProjectUrl)
   }, [dnsService])
+
+  // Auto switch to server when dns-query is selected and currently on client
+  useEffect(() => {
+    if (dnsType === 'dns-query' && requestType === 'client') {
+      setRequestType('server')
+    }
+  }, [dnsType, requestType])
+
+  // Auto switch to dns-query when self service is selected and currently on resolve
+  useEffect(() => {
+    if (isSelfService && dnsType === 'resolve') {
+      setDNSType('dns-query')
+    }
+  }, [isSelfService, dnsType])
 
   const saveHeaders = (headers: CustomHeader[]) => {
     if (typeof window !== 'undefined') {
@@ -201,6 +209,8 @@ export default function DoHPlayground(props: DoHPlaygroundProps) {
     return trimmed.startsWith('https://')
   }
 
+  const dnsServiceValidation = useMemo(() => validateDNSService(dnsService), [dnsService])
+
   const handleDNSServiceChange = (newValue: string) => {
     setDNSService(newValue)
     const trimmed = newValue.trim()
@@ -225,192 +235,218 @@ export default function DoHPlayground(props: DoHPlaygroundProps) {
   const inputClass =
     'w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20'
 
-  const dnsTypeOptions: { label: string; value: DNSType }[] = [
-    { label: 'Resolve endpoint', value: 'resolve' },
-    { label: 'DNS Query endpoint', value: 'dns-query' },
-  ]
+  const dnsTypeOptions: { label: string; value: DNSType; disabled?: boolean }[] = useMemo(
+    () => [
+      { label: 'Resolve endpoint', value: 'resolve', disabled: isSelfService },
+      { label: 'DNS Query endpoint', value: 'dns-query' },
+    ],
+    [isSelfService]
+  )
 
-  const queryTypeOptions: { label: string; value: QueryType }[] = [
-    { label: 'A', value: 'A' },
-    { label: 'AAAA', value: 'AAAA' },
-    { label: 'CNAME', value: 'CNAME' as QueryType },
-    { label: 'MX', value: 'MX' as QueryType },
-    { label: 'NS', value: 'NS' as QueryType },
-    { label: 'TXT', value: 'TXT' as QueryType },
-  ]
+  const queryTypeOptions: { label: string; value: QueryType }[] = useMemo(
+    () => [
+      { label: 'A', value: 'A' },
+      { label: 'AAAA', value: 'AAAA' },
+      { label: 'CNAME', value: 'CNAME' as QueryType },
+      { label: 'MX', value: 'MX' as QueryType },
+      { label: 'NS', value: 'NS' as QueryType },
+      { label: 'TXT', value: 'TXT' as QueryType },
+    ],
+    []
+  )
 
-  const requestModes: { label: string; value: RequestType; helper: string }[] = [
-    { label: 'Server', value: 'server', helper: 'Proxy via edge/server runtime' },
-    { label: 'Client', value: 'client', helper: 'Fetch directly from the browser' },
-  ]
-  const currentRequestMode = requestModes.find((mode) => mode.value === requestType)
-  const switchOptions = requestModes.map(({ label, value }) => ({
-    label,
-    value,
-    disabled: dnsType === 'dns-query' && value === 'client',
-  }))
-  const switchTooltip =
-    dnsType === 'dns-query'
-      ? 'DNS Query endpoint requires Server mode due to CORS preflight limitations. Most DNS servers do not support OPTIONS requests from browsers.'
-      : undefined
+  const requestModes: { label: string; value: RequestType; helper: string }[] = useMemo(
+    () => [
+      { label: 'Server', value: 'server', helper: 'Proxy via edge/server runtime' },
+      { label: 'Client', value: 'client', helper: 'Fetch directly from the browser' },
+    ],
+    []
+  )
+
+  const currentRequestMode = useMemo(() => requestModes.find((mode) => mode.value === requestType), [requestModes, requestType])
+
+  const switchOptions = useMemo(
+    () =>
+      requestModes.map(({ label, value }) => ({
+        label,
+        value,
+        disabled: dnsType === 'dns-query' && value === 'client',
+      })),
+    [requestModes, dnsType]
+  )
+
+  const switchTooltip = useMemo(
+    () =>
+      dnsType === 'dns-query'
+        ? 'DNS Query endpoint requires Server mode due to CORS preflight limitations. Most DNS servers do not support OPTIONS requests from browsers.'
+        : undefined,
+    [dnsType]
+  )
 
   return (
     <section className="mx-auto w-full text-black">
-      <div className="space-y-6">
+      <div className="flex flex-col gap-6">
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-lg shadow-slate-200/60">
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <p className="text-sm uppercase tracking-wide text-slate-500">Playground form</p>
-              <h2 className="text-2xl font-semibold text-slate-900">Run a DoH query</h2>
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <p className="text-sm uppercase tracking-wide text-slate-500">Playground form</p>
+                <h2 className="text-2xl font-semibold text-slate-900">Run a DoH query</h2>
+              </div>
+              <div className="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-600">Default endpoint: {defaultDNSService || '—'}</div>
             </div>
-            <div className="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-600">Default endpoint: {defaultDNSService || '—'}</div>
-          </div>
 
-          <form onSubmit={handleTest} className="w-full space-y-6">
-            <div className="grid gap-4 md:grid-cols-2">
-              <label className="block text-left md:col-span-2">
-                <span className="text-sm font-medium text-slate-700">DNS service endpoint</span>
-                <DNSInput
-                  value={dnsService}
-                  onChange={handleDNSServiceChange}
-                  onSelect={handleDNSServiceChange}
-                  className={`${inputClass} mt-2`}
-                  placeholder="https://dns.google or 1.1.1.1"
-                  suffix={
-                    isSelfService ? (
-                      <Tooltip content="Custom header x-doh-api-key can be used for private DNS" position="top">
-                        <div className="cursor-help text-slate-400 hover:text-slate-600">
-                          <FeatherIcon icon="info" size={20} />
-                        </div>
-                      </Tooltip>
-                    ) : undefined
-                  }
-                />
-              </label>
-
-              <FormSelect
-                label="Interface type"
-                value={dnsType}
-                onChange={(next) => {
-                  setDNSType(next as DNSType)
-                  // Auto switch to server if dns-query is selected and currently on client
-                  if (next === 'dns-query' && requestType === 'client') {
-                    setRequestType('server')
-                  }
-                }}
-                options={dnsTypeOptions}
-              />
-
-              <FormSelect label="Query type" value={queryTypes} onChange={(next) => setQueryTypes(next as QueryType)} options={queryTypeOptions} />
-
-              <div className="md:col-span-2">
-                <label className="block text-left">
-                  <span className="text-sm font-medium text-slate-700">Domain to test</span>
-                  <input type="text" value={domain} onChange={(event) => setDomain(event.target.value)} className={`${inputClass} mt-2`} placeholder="example.com" />
+            <form onSubmit={handleTest} className="flex w-full flex-col gap-6">
+              <div className="grid gap-4 md:grid-cols-2">
+                <label className="flex flex-col gap-2 text-left md:col-span-2">
+                  <span className="text-sm font-medium text-slate-700">DNS service endpoint</span>
+                  <DNSInput
+                    value={dnsService}
+                    onChange={handleDNSServiceChange}
+                    onSelect={handleDNSServiceChange}
+                    className={`${inputClass} ${!dnsServiceValidation.isValid ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' : ''}`}
+                    placeholder="https://dns.google or 1.1.1.1"
+                    suffix={
+                      isSelfService ? (
+                        <Tooltip content="Custom header x-doh-api-key can be used for private DNS" position="top">
+                          <div className="cursor-help text-slate-400 hover:text-slate-600">
+                            <FeatherIcon icon="info" size={20} />
+                          </div>
+                        </Tooltip>
+                      ) : undefined
+                    }
+                  />
+                  {dnsService && (
+                    <p className={`text-xs ${dnsServiceValidation.isValid ? 'text-slate-500' : 'text-red-600'}`}>
+                      {dnsServiceValidation.message || 'Consider using system default DNS if available'}
+                    </p>
+                  )}
                 </label>
-              </div>
-            </div>
 
-            <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4">
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div className="min-w-[220px] flex-1">
-                  <p className="text-sm font-medium text-slate-700">Request origin</p>
-                  <p className="text-xs text-slate-500">{currentRequestMode?.helper}</p>
-                </div>
-                <Switch
-                  className="shrink-0"
-                  options={switchOptions}
-                  value={requestType}
-                  onChange={(next) => setRequestType(next as RequestType)}
-                  disabled={dnsType === 'dns-query'}
-                  tooltip={switchTooltip}
+                <FormSelect
+                  label="Interface type"
+                  value={dnsType}
+                  onChange={(next) => {
+                    setDNSType(next as DNSType)
+                    // Auto switch to server if dns-query is selected and currently on client
+                    if (next === 'dns-query' && requestType === 'client') {
+                      setRequestType('server')
+                    }
+                  }}
+                  options={dnsTypeOptions}
                 />
-              </div>
-            </div>
 
-            {!showCustomHeaders || customHeaders.length === 0 ? (
-              <button
-                type="button"
-                onClick={addHeader}
-                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-              >
-                + Add custom headers
-              </button>
-            ) : (
-              <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/80 p-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-slate-700">Custom headers</span>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={addHeader}
-                      className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
-                    >
-                      + Add header
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowCustomHeaders(false)
-                        setCustomHeaders([])
-                        saveHeaders([])
-                      }}
-                      className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-500 transition hover:bg-slate-50"
-                    >
-                      Hide
-                    </button>
-                  </div>
+                <FormSelect label="Query type" value={queryTypes} onChange={(next) => setQueryTypes(next as QueryType)} options={queryTypeOptions} />
+
+                <div className="md:col-span-2">
+                  <label className="flex flex-col gap-2 text-left">
+                    <span className="text-sm font-medium text-slate-700">Domain to test</span>
+                    <input type="text" value={domain} onChange={(event) => setDomain(event.target.value)} className={inputClass} placeholder="example.com" />
+                  </label>
                 </div>
-                <div className="space-y-2">
-                  {customHeaders.map((header) => (
-                    <div key={header.id} className="flex gap-2">
-                      <CustomHeaderInput
-                        value={header.name}
-                        onChange={(value) => updateHeader(header.id, 'name', value)}
-                        onSelect={(value) => updateHeader(header.id, 'name', value)}
-                        className={`${inputClass} flex-1`}
-                        placeholder="Header key (e.g., X-DOH-API-KEY)"
-                      />
-                      <input
-                        type="text"
-                        value={header.value}
-                        onChange={(e) => updateHeader(header.id, 'value', e.target.value)}
-                        className={`${inputClass} flex-1`}
-                        placeholder="Header value (plaintext)"
-                      />
+              </div>
+
+              <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div className="flex min-w-[220px] flex-1 flex-col gap-1">
+                    <p className="text-sm font-medium text-slate-700">Request origin</p>
+                    <p className="text-xs text-slate-500">{currentRequestMode?.helper}</p>
+                  </div>
+                  <Switch
+                    className="shrink-0"
+                    options={switchOptions}
+                    value={requestType}
+                    onChange={(next) => setRequestType(next as RequestType)}
+                    disabled={dnsType === 'dns-query'}
+                    tooltip={switchTooltip}
+                  />
+                </div>
+              </div>
+
+              {!showCustomHeaders || customHeaders.length === 0 ? (
+                <button
+                  type="button"
+                  onClick={addHeader}
+                  className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                >
+                  + Add custom headers
+                </button>
+              ) : (
+                <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50/80 p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-slate-700">Custom headers</span>
+                    <div className="flex gap-2">
                       <button
                         type="button"
-                        onClick={() => removeHeader(header.id)}
-                        className="rounded-lg border border-red-300 bg-white px-3 py-2.5 text-sm font-medium text-red-600 transition hover:bg-red-50"
+                        onClick={addHeader}
+                        className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
                       >
-                        Remove
+                        + Add header
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowCustomHeaders(false)
+                          setCustomHeaders([])
+                          saveHeaders([])
+                        }}
+                        className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-500 transition hover:bg-slate-50"
+                      >
+                        Hide
                       </button>
                     </div>
-                  ))}
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    {customHeaders.map((header) => (
+                      <div key={header.id} className="flex gap-2">
+                        <CustomHeaderInput
+                          value={header.name}
+                          onChange={(value) => updateHeader(header.id, 'name', value)}
+                          onSelect={(value) => updateHeader(header.id, 'name', value)}
+                          className={`${inputClass} flex-1`}
+                          placeholder="Header key (e.g., X-DOH-API-KEY)"
+                        />
+                        <input
+                          type="text"
+                          value={header.value}
+                          onChange={(e) => updateHeader(header.id, 'value', e.target.value)}
+                          className={`${inputClass} flex-1`}
+                          placeholder="Header value (plaintext)"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeHeader(header.id)}
+                          className="rounded-lg border border-red-300 bg-white px-3 py-2.5 text-sm font-medium text-red-600 transition hover:bg-red-50"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-slate-500">Custom headers will be included in all DoH requests</p>
                 </div>
-                <p className="text-xs text-slate-500">Custom headers will be included in all DoH requests</p>
+              )}
+
+              <button
+                type="submit"
+                className="w-full rounded-xl bg-indigo-500 py-3 text-base font-semibold text-white shadow-lg shadow-indigo-500/30 transition hover:bg-indigo-600 hover:shadow-indigo-500/40"
+              >
+                Run test
+              </button>
+            </form>
+
+            {error && (
+              <div className="rounded-lg border border-red-200 bg-red-50/80 p-4 text-red-700 shadow-sm" role="alert" aria-live="assertive">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-semibold">Request failed</p>
+                    <p className="text-sm">{error}</p>
+                  </div>
+                  <div className="text-lg font-bold text-red-500">{count}s</div>
+                </div>
               </div>
             )}
-
-            <button
-              type="submit"
-              className="w-full rounded-xl bg-indigo-500 py-3 text-base font-semibold text-white shadow-lg shadow-indigo-500/30 transition hover:bg-indigo-600 hover:shadow-indigo-500/40"
-            >
-              Run test
-            </button>
-          </form>
-
-          {error && (
-            <div className="mt-4 rounded-lg border border-red-200 bg-red-50/80 p-4 text-red-700 shadow-sm" role="alert" aria-live="assertive">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-sm font-semibold">Request failed</p>
-                  <p className="text-sm">{error}</p>
-                </div>
-                <div className="text-lg font-bold text-red-500">{count}s</div>
-              </div>
-            </div>
-          )}
+          </div>
         </div>
 
         <DNSResultsPanel records={records} loading={isLoading} className="min-w-0" />

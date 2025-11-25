@@ -32,6 +32,7 @@
     "@vercel/analytics": "^1.5.0",
     "@vercel/speed-insights": "^1.2.0",
     "ahooks": "^3.8.4",
+    "classnames": "^2.5.1",
     "cookie": "^1.0.2",
     "feather-icons-react": "^0.7.1",
     "jsonwebtoken": "^9.0.2",

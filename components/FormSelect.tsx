@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 interface Option {
   label: string
   value: string
+  disabled?: boolean
 }
 
 interface FormSelectProps {
@@ -70,12 +71,16 @@ export default function FormSelect(props: FormSelectProps) {
             <ul role="listbox" className="max-h-60 overflow-y-auto py-1 text-sm text-slate-800">
               {options.map((option) => {
                 const active = option.value === selected?.value
+                const isDisabled = option.disabled
                 return (
                   <li key={option.value}>
                     <button
                       type="button"
-                      className={`flex w-full items-center justify-between px-4 py-2 text-left text-sm transition ${active ? 'bg-indigo-50 text-indigo-600' : 'hover:bg-slate-50'}`}
-                      onClick={() => handleSelect(option.value)}
+                      className={`flex w-full items-center justify-between px-4 py-2 text-left text-sm transition ${
+                        isDisabled ? 'cursor-not-allowed opacity-50' : active ? 'bg-indigo-50 text-indigo-600' : 'hover:bg-slate-50'
+                      }`}
+                      onClick={() => !isDisabled && handleSelect(option.value)}
+                      disabled={isDisabled}
                     >
                       <span className="truncate">{option.label}</span>
                       {active ? <FeatherIcon icon="check" size={16} className="text-indigo-500" /> : null}
