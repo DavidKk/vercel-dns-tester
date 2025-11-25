@@ -26,22 +26,11 @@ export interface DoHPlaygroundProps {
   domain?: string
   queryType?: string
   requestType?: string
-  isAuthenticated?: boolean
-  dohApiKey?: string | null
   submit(dnsType: DNSType, dnsService: string, domain: string, queryType: QueryType, headers?: Record<string, string>): Promise<DNSRecord[]>
 }
 
 export default function DoHPlayground(props: DoHPlaygroundProps) {
-  const {
-    dnsService: defaultDNSService,
-    dnsType: defaultDNSType,
-    domain: defaultDomain,
-    queryType: defaultQueryType,
-    requestType: defaultRequestType,
-    isAuthenticated: initialIsAuthenticated = false,
-    dohApiKey: initialDohApiKey = null,
-    submit,
-  } = props
+  const { dnsService: defaultDNSService, dnsType: defaultDNSType, domain: defaultDomain, queryType: defaultQueryType, requestType: defaultRequestType, submit } = props
 
   const [dnsService, setDNSService] = useState<string>(defaultDNSService || '')
   const [dnsType, setDNSType] = useState<DNSType>(defaultDNSType && isDNSType(defaultDNSType) ? defaultDNSType : 'resolve')
@@ -99,33 +88,6 @@ export default function DoHPlayground(props: DoHPlaygroundProps) {
       setDNSType('dns-query')
     }
   }, [isSelfService, dnsType])
-
-  // Auto add x-doh-api-key header when authenticated and using self service
-  useEffect(() => {
-    if (isSelfService && initialIsAuthenticated && initialDohApiKey) {
-      setCustomHeaders((prev) => {
-        const apiKeyHeader = prev.find((h) => h.name === 'x-doh-api-key')
-        if (!apiKeyHeader) {
-          const newHeader: CustomHeader = { id: 'auto-doh-api-key', name: 'x-doh-api-key', value: initialDohApiKey }
-          setShowCustomHeaders(true)
-          return [...prev, newHeader]
-        } else if (apiKeyHeader.value !== initialDohApiKey) {
-          // Update if value changed
-          return prev.map((h) => (h.id === 'auto-doh-api-key' ? { ...h, value: initialDohApiKey } : h))
-        }
-        return prev
-      })
-    } else {
-      // Remove auto-added header when conditions are not met
-      setCustomHeaders((prev) => {
-        const filtered = prev.filter((h) => h.id !== 'auto-doh-api-key')
-        if (filtered.length === 0 && prev.length > 0) {
-          setShowCustomHeaders(false)
-        }
-        return filtered
-      })
-    }
-  }, [isSelfService, initialIsAuthenticated, initialDohApiKey])
 
   const addHeader = () => {
     if (!showCustomHeaders) {

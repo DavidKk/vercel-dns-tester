@@ -8,24 +8,9 @@ import { convertToDNSMessage, parseDNSQuery } from '@/services/dns/dns-message'
 import { fetchDNSQuery } from '@/services/dns/fetch-dns-query'
 import { hostsToDNSRecords } from '@/services/dns/hosts'
 import { getGistInfo, readGistFile } from '@/services/gist'
+import { isSelfRequest } from '@/utils/request'
 
 import { GIST_HOSTS_FILE } from './constants'
-
-function isSelfRequest(req: NextRequest): boolean {
-  const requestHost = req.headers.get('host')
-  if (!requestHost) {
-    return false
-  }
-
-  const url = new URL(req.url)
-  const currentHost = url.host
-
-  // Compare hostname (ignore port for comparison)
-  const requestHostname = requestHost.split(':')[0]
-  const currentHostname = currentHost.split(':')[0]
-
-  return requestHostname === currentHostname
-}
 
 export const POST = buffer(async (req: NextRequest) => {
   const hasAccess = checkDoHAccess(req)
