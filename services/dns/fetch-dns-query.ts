@@ -115,21 +115,34 @@ function parseDNSResponse(buffer: ArrayBuffer): DNSRecord[] {
   const view = new DataView(buffer)
   const records: DNSRecord[] = []
 
+  // eslint-disable-next-line no-console
+  console.log('[parseDNSResponse] Buffer size:', buffer.byteLength)
+
   // Parse Header
   // const transactionId = view.getUint16(0)
   // const flags = view.getUint16(2)
   const questionCount = view.getUint16(4)
   const answerCount = view.getUint16(6)
 
+  // eslint-disable-next-line no-console
+  console.log('[parseDNSResponse] Question count:', questionCount, 'Answer count:', answerCount)
+
   // Skip Header (12 bytes) and parse Questions
   let offset = 12
   for (let i = 0; i < questionCount; i++) {
+    const oldOffset = offset
     offset = skipQuestionSection(view, offset)
+    // eslint-disable-next-line no-console
+    console.log('[parseDNSResponse] Skipped question', i, 'offset:', oldOffset, '->', offset)
   }
 
   // Parse Answer Section
   for (let i = 0; i < answerCount; i++) {
+    // eslint-disable-next-line no-console
+    console.log('[parseDNSResponse] Parsing answer', i, 'at offset:', offset)
     const { name, type, ttl, data, nextOffset } = parseResourceRecord(view, offset)
+    // eslint-disable-next-line no-console
+    console.log('[parseDNSResponse] Parsed record:', { name, type, ttl, dataLength: data.length, nextOffset })
     records.push({ name, type, ttl, data })
     offset = nextOffset
   }
@@ -174,13 +187,20 @@ function skipQuestionSection(view: DataView, offset: number): number {
  * - RDATA: The record-specific data (e.g., IP address).
  */
 function parseResourceRecord(view: DataView, offset: number) {
+  // eslint-disable-next-line no-console
+  console.log('[parseResourceRecord] Starting at offset:', offset, 'buffer size:', view.buffer.byteLength)
+
   // Parse NAME (could be a pointer or full name)
   const { name, nextOffset: nameOffset } = parseName(view, offset)
   offset = nameOffset
+  // eslint-disable-next-line no-console
+  console.log('[parseResourceRecord] Parsed name:', name, 'nameOffset:', nameOffset)
 
   // Parse TYPE (2 bytes)
   const type = view.getUint16(offset)
   offset += 2
+  // eslint-disable-next-line no-console
+  console.log('[parseResourceRecord] Type:', type, 'offset:', offset)
 
   // Parse CLASS (2 bytes)
   // const cls = view.getUint16(offset)
@@ -189,10 +209,20 @@ function parseResourceRecord(view: DataView, offset: number) {
   // Parse TTL (4 bytes)
   const ttl = view.getUint32(offset)
   offset += 4
+  // eslint-disable-next-line no-console
+  console.log('[parseResourceRecord] TTL:', ttl, 'offset:', offset)
 
   // Parse RDLENGTH (2 bytes)
   const rdLength = view.getUint16(offset)
   offset += 2
+  // eslint-disable-next-line no-console
+  console.log('[parseResourceRecord] RDLENGTH:', rdLength, 'offset:', offset, 'remaining buffer:', view.buffer.byteLength - offset)
+
+  if (rdLength > view.buffer.byteLength - offset) {
+    // eslint-disable-next-line no-console
+    console.error('[parseResourceRecord] Invalid RDLENGTH:', rdLength, 'exceeds remaining buffer:', view.buffer.byteLength - offset)
+    throw new Error(`Invalid RDLENGTH: ${rdLength}, exceeds remaining buffer: ${view.buffer.byteLength - offset}`)
+  }
 
   // Parse RDATA
   let data = ''
@@ -222,9 +252,30 @@ function parseResourceRecord(view: DataView, offset: number) {
  * - Compressed: A pointer to another location in the message.
  */
 function parseName(view: DataView, offset: number): { name: string; nextOffset: number } {
+  // eslint-disable-next-line no-console
+  console.log('[parseName] Starting at offset:', offset, 'buffer size:', view.buffer.byteLength)
+
+  if (offset >= view.buffer.byteLength) {
+    // eslint-disable-next-line no-console
+    console.error('[parseName] Offset out of bounds:', offset, 'buffer size:', view.buffer.byteLength)
+    throw new Error(`Offset out of bounds: ${offset} >= ${view.buffer.byteLength}`)
+  }
+
   let name = ''
-  while (true) {
+  let depth = 0
+  const maxDepth = 10 // Prevent infinite loops
+
+  while (depth < maxDepth) {
+    if (offset >= view.buffer.byteLength) {
+      // eslint-disable-next-line no-console
+      console.error('[parseName] Offset exceeded buffer at depth:', depth)
+      throw new Error(`Offset exceeded buffer at depth: ${depth}`)
+    }
+
     const length = view.getUint8(offset)
+    // eslint-disable-next-line no-console
+    console.log('[parseName] Depth:', depth, 'offset:', offset, 'length byte:', length, 'hex:', `0x${length.toString(16)}`)
+
     if (length === 0) {
       offset += 1 // End of name
       break
@@ -232,18 +283,59 @@ function parseName(view: DataView, offset: number): { name: string; nextOffset: 
 
     if ((length & 0xc0) === 0xc0) {
       // Pointer (compressed name)
+      if (offset + 1 >= view.buffer.byteLength) {
+        // eslint-disable-next-line no-console
+        console.error('[parseName] Pointer extends beyond buffer')
+        throw new Error('Pointer extends beyond buffer')
+      }
       const pointer = ((length & 0x3f) << 8) | view.getUint8(offset + 1)
+      // eslint-disable-next-line no-console
+      console.log('[parseName] Found pointer:', pointer, 'hex:', `0x${pointer.toString(16)}`)
+
+      if (pointer >= view.buffer.byteLength) {
+        // eslint-disable-next-line no-console
+        console.error('[parseName] Invalid pointer:', pointer, 'buffer size:', view.buffer.byteLength)
+        throw new Error(`Invalid pointer: ${pointer} >= ${view.buffer.byteLength}`)
+      }
+
       const { name: pointedName } = parseName(view, pointer)
       name += pointedName
       offset += 2
       break
     }
 
+    if (length > 63) {
+      // eslint-disable-next-line no-console
+      console.error('[parseName] Invalid label length:', length)
+      throw new Error(`Invalid label length: ${length}`)
+    }
+
+    if (offset + 1 + length > view.buffer.byteLength) {
+      // eslint-disable-next-line no-console
+      console.error('[parseName] Label extends beyond buffer, length:', length, 'offset:', offset, 'buffer size:', view.buffer.byteLength)
+      throw new Error(`Label extends beyond buffer: length=${length}, offset=${offset}, buffer=${view.buffer.byteLength}`)
+    }
+
     offset += 1
-    name += String.fromCharCode(...new Uint8Array(view.buffer, offset, length)) + '.'
+    const labelBytes = new Uint8Array(view.buffer, offset, length)
+    name += String.fromCharCode(...labelBytes) + '.'
     offset += length
+    depth++
   }
 
+  if (depth >= maxDepth) {
+    // eslint-disable-next-line no-console
+    console.error('[parseName] Max depth reached')
+    throw new Error('Max depth reached while parsing name')
+  }
+
+  // Remove trailing dot
+  if (name.endsWith('.')) {
+    name = name.slice(0, -1)
+  }
+
+  // eslint-disable-next-line no-console
+  console.log('[parseName] Parsed name:', name, 'nextOffset:', offset)
   return { name, nextOffset: offset }
 }
 
@@ -285,6 +377,25 @@ function parseIPv6(view: DataView, offset: number, length: number): string {
  * @returns The raw data as a string.
  */
 function parseRawData(view: DataView, offset: number, length: number): string {
+  // eslint-disable-next-line no-console
+  console.log('[parseRawData] offset:', offset, 'length:', length, 'buffer size:', view.buffer.byteLength)
+
+  if (offset + length > view.buffer.byteLength) {
+    // eslint-disable-next-line no-console
+    console.error('[parseRawData] Invalid length:', length, 'exceeds buffer at offset:', offset)
+    throw new Error(`Invalid length: ${length}, exceeds buffer at offset: ${offset}`)
+  }
+
   const bytes = new Uint8Array(view.buffer, offset, length)
+  // eslint-disable-next-line no-console
+  console.log('[parseRawData] Created Uint8Array, length:', bytes.length)
+
+  // For large arrays, use a more efficient method
+  if (bytes.length > 1000) {
+    // eslint-disable-next-line no-console
+    console.warn('[parseRawData] Large data size:', bytes.length, 'using Buffer conversion')
+    return Buffer.from(bytes).toString('utf8')
+  }
+
   return String.fromCharCode(...bytes)
 }
