@@ -124,7 +124,7 @@ importers:
         specifier: ^12.1.1
         version: 12.1.1(eslint@9.17.0(jiti@2.4.2))
       husky:
-        specifier: ^9.1.1
+        specifier: ^9.1.7
         version: 9.1.7
       jest:
         specifier: ^29.7.0
