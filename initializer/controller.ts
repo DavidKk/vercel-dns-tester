@@ -15,10 +15,14 @@ export interface ContextWithParams<P> extends Context {
 }
 
 export function api(handle: (req: NextRequest, context: Context) => Promise<Record<string, any>>) {
-  return async (req: NextRequest, context: Context) => {
+  return async (req: NextRequest, context: { params: Promise<any> }) => {
     return runWithContext(req, async () => {
       try {
-        const result = await handle(req, context)
+        const enhancedContext: Context = {
+          params: context.params,
+          searchParams: req.nextUrl.searchParams,
+        }
+        const result = await handle(req, enhancedContext)
         if (result instanceof NextResponse) {
           return result
         }
@@ -49,10 +53,14 @@ export function api(handle: (req: NextRequest, context: Context) => Promise<Reco
 }
 
 export function plainText<P>(handle: (req: NextRequest, context: ContextWithParams<P>) => Promise<string | NextResponse>) {
-  return async (req: NextRequest, context: ContextWithParams<P>) => {
+  return async (req: NextRequest, context: { params: Promise<any> }) => {
     return runWithContext(req, async () => {
       try {
-        const result = await handle(req, context)
+        const enhancedContext: ContextWithParams<P> = {
+          params: context.params,
+          searchParams: req.nextUrl.searchParams,
+        }
+        const result = await handle(req, enhancedContext)
         const headers = getHeaders()
         if (result instanceof NextResponse) {
           return result
@@ -68,10 +76,14 @@ export function plainText<P>(handle: (req: NextRequest, context: ContextWithPara
 }
 
 export function buffer<P>(handle: (req: NextRequest, context: ContextWithParams<P>) => Promise<ArrayBuffer | NextResponse>) {
-  return async (req: NextRequest, context: ContextWithParams<P>) => {
+  return async (req: NextRequest, context: { params: Promise<any> }) => {
     return runWithContext(req, async () => {
       try {
-        const result = await handle(req, context)
+        const enhancedContext: ContextWithParams<P> = {
+          params: context.params,
+          searchParams: req.nextUrl.searchParams,
+        }
+        const result = await handle(req, enhancedContext)
         const headers = getHeaders()
         if (result instanceof NextResponse) {
           return result
