@@ -37,7 +37,7 @@
     "cookie": "^1.0.2",
     "feather-icons-react": "^0.7.1",
     "jsonwebtoken": "^9.0.2",
-    "next": "15.5.7",
+    "next": "15.5.9",
     "otplib": "^12.0.1",
     "react": "^19.1.2",
     "react-dom": "^19.1.2",
@@ -62,7 +62,7 @@
     "cz-customizable": "^7.2.1",
     "cz-customizable-i18n-config": "^0.0.1-alpha.2",
     "eslint": "^9",
-    "eslint-config-next": "15.5.7",
+    "eslint-config-next": "15.5.9",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-import": "^2.29.0",
     "eslint-plugin-prettier": "^5.2.1",
@@ -86,5 +86,5 @@
     "typescript": "^5",
     "typescript-transform-paths": "^3.4.7"
   },
-  "packageManager": "pnpm@10.2.0+sha512.0d27364e0139c6aadeed65ada153135e0ca96c8da42123bd50047f961339dc7a758fc2e944b428f52be570d1bd3372455c1c65fa2e7aa0bfbf931190f9552001"
+  "packageManager": "pnpm@10.25.0+sha512.5e82639027af37cf832061bcc6d639c219634488e0f2baebe785028a793de7b525ffcd3f7ff574f5e9860654e098fe852ba8ac5dd5cefe1767d23a020a92f501"
 }
