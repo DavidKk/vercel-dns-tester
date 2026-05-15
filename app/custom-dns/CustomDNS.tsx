@@ -4,8 +4,8 @@ import { useRequest } from 'ahooks'
 import { useMemo, useState } from 'react'
 import { FiRotateCcw, FiSave } from 'react-icons/fi'
 
-import { updateFiles } from '@/app/actions/custom-dns'
 import { Spinner } from '@/components/Spinner'
+import type { FilesInWriteGistFiles } from '@/services/gist'
 
 import { buildFileUpdates } from './buildFileUpdates'
 import { GistFileEditor } from './GistFileEditor'
@@ -49,7 +49,25 @@ export function CustomDNS(props: CustomDNSProps) {
         return
       }
 
-      await updateFiles(...updates)
+      const response = await fetch('/api/custom-dns/files', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates as FilesInWriteGistFiles[]),
+      })
+
+      if (response.status === 401) {
+        throw new Error('Session expired. Please sign in again.')
+      }
+
+      if (!response.ok) {
+        throw new Error('Failed to save HOSTS files')
+      }
+
+      const payload = (await response.json()) as { code: number; message: string }
+      if (payload.code !== 0) {
+        throw new Error(payload.message || 'Failed to save HOSTS files')
+      }
+
       setInitialFiles({ ...files })
     },
     {

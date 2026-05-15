@@ -12,8 +12,10 @@ export const GET = api(async () => {
 })
 
 export const POST = api(async (req) => {
-  const { username, password, token } = await req.json()
-  const { cookie } = await login(username, password, token)
+  const body = (await req.json()) as { username?: string; password?: string; token?: string; rememberMe?: boolean }
+  const { username = '', password = '', token = '' } = body
+  const rememberMe = body.rememberMe !== false
+  const { cookie } = await login(username, password, token, rememberMe)
 
   const headers = new Headers()
   headers.append('Set-Cookie', cookie)

@@ -6,8 +6,9 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { FiGithub, FiLogOut, FiUser } from 'react-icons/fi'
 
+import { Tooltip } from '@/components/Tooltip'
 import { useLayoutVisibility } from '@/hooks/useLayoutVisibility'
-import { name, repository } from '@/package.json'
+import { repository } from '@/package.json'
 import type { AuthUser } from '@/services/auth/access'
 
 import { DEFAULT_NAV } from './constants'
@@ -23,7 +24,8 @@ interface NavProps {
   user?: AuthUser | null
 }
 
-const DEFAULT_TITLE = name.replace('vercel', '').split('-').join(' ')
+/** Header brand next to the logo */
+const DEFAULT_TITLE = 'DNS Tester'
 const GITHUB_URL = repository.url
 
 export function Nav(props: NavProps) {
@@ -101,7 +103,7 @@ export function Nav(props: NavProps) {
             {Object.entries(nav).map(([group, items]) => (
               <div className="flex flex-wrap items-center gap-1" key={group}>
                 {items.map(({ name, href }) => {
-                  const isActive = pathname === href
+                  const isActive = href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(`${href}/`)
 
                   return (
                     <Link
@@ -122,16 +124,18 @@ export function Nav(props: NavProps) {
           <div className="ml-auto flex items-center gap-2">
             {user ? (
               <div className="relative" ref={menuRef}>
-                <button
-                  type="button"
-                  onClick={() => setIsUserMenuOpen((value) => !value)}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-app-border text-app-muted transition-colors hover:bg-app-subtle hover:text-app-text"
-                  aria-expanded={isUserMenuOpen}
-                  aria-haspopup="menu"
-                  aria-label="Open account menu"
-                >
-                  <FiUser size={18} />
-                </button>
+                <Tooltip content={user.username ?? 'Account'}>
+                  <button
+                    type="button"
+                    onClick={() => setIsUserMenuOpen((value) => !value)}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-app-border text-app-muted transition-colors hover:bg-app-subtle hover:text-app-text"
+                    aria-expanded={isUserMenuOpen}
+                    aria-haspopup="menu"
+                    aria-label="Open account menu"
+                  >
+                    <FiUser size={18} />
+                  </button>
+                </Tooltip>
 
                 {isUserMenuOpen && (
                   <div className="absolute right-0 z-50 mt-2 w-56 overflow-hidden rounded-lg border border-app-border bg-app-surface shadow-lg" role="menu">
@@ -152,28 +156,32 @@ export function Nav(props: NavProps) {
                 )}
               </div>
             ) : (
-              <Link
-                className={`inline-flex h-10 items-center justify-center rounded-md border px-3 text-sm font-medium transition-colors ${
-                  pathname === '/login'
-                    ? 'border-app-accent bg-app-accent text-white'
-                    : 'border-app-border text-app-muted hover:border-app-accent/40 hover:bg-app-accentSoft hover:text-app-accent'
-                }`}
-                href="/login"
-              >
-                Login
-              </Link>
+              <Tooltip content="Login">
+                <Link
+                  className={`inline-flex h-10 items-center justify-center rounded-md border px-3 text-sm font-medium transition-colors ${
+                    pathname === '/login'
+                      ? 'border-app-accent bg-app-accent text-white'
+                      : 'border-app-border text-app-muted hover:border-app-accent/40 hover:bg-app-accentSoft hover:text-app-accent'
+                  }`}
+                  href="/login"
+                >
+                  Login
+                </Link>
+              </Tooltip>
             )}
 
             {GITHUB_URL && (
-              <a
-                className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-app-border text-app-muted transition-colors hover:border-app-border hover:bg-app-subtle hover:text-app-text"
-                href={GITHUB_URL}
-                target="_blank"
-                rel="noreferrer"
-                aria-label="Open GitHub repository"
-              >
-                <FiGithub size={18} />
-              </a>
+              <Tooltip content="GitHub">
+                <a
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-app-border text-app-muted transition-colors hover:border-app-border hover:bg-app-subtle hover:text-app-text"
+                  href={GITHUB_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="Open GitHub repository"
+                >
+                  <FiGithub size={18} />
+                </a>
+              </Tooltip>
             )}
           </div>
         </div>

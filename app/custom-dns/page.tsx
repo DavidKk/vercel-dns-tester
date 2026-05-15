@@ -1,11 +1,14 @@
-import { fetchFiles } from '@/app/actions/custom-dns'
 import { checkAccess } from '@/services/auth/access'
 
-import { CustomDNS } from './CustomDNS'
+import { CustomDNSPage } from './CustomDNSPage'
 
-export default async function Home() {
+/**
+ * Custom HOSTS route — requires login on the server so anonymous visitors never see the loading skeleton.
+ * Gist data is still loaded on the client after this gate.
+ * @returns Client page that fetches Gist files after paint
+ */
+export default async function CustomDnsPage() {
   await checkAccess({ redirectUrl: '/custom-dns', isApiRouter: false })
 
-  const files = await fetchFiles()
-  return <CustomDNS files={files} />
+  return <CustomDNSPage />
 }
