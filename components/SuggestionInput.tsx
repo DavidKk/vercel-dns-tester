@@ -4,6 +4,8 @@ import classNames from 'classnames'
 import type { ComponentProps, KeyboardEvent, ReactNode } from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
+import { CONTROL_PADDING_CLASS, CONTROL_WRAPPER_CLASS } from './controlStyles'
+
 export interface SuggestionInputOption {
   label: string
   value: string
@@ -103,13 +105,8 @@ export default function SuggestionInput(props: SuggestionInputProps) {
   }, [highlightedIndex])
 
   return (
-    <div
-      className={classNames(
-        'relative w-full rounded-lg border border-slate-200 bg-white text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20',
-        className
-      )}
-    >
-      <div className="relative flex w-full items-center gap-2">
+    <div className={classNames(CONTROL_WRAPPER_CLASS, className)}>
+      <div className="relative flex min-h-11 w-full items-center gap-2">
         <input
           ref={inputRef}
           type="text"
@@ -117,15 +114,22 @@ export default function SuggestionInput(props: SuggestionInputProps) {
           onChange={handleInputChange}
           onFocus={() => setIsOpen(true)}
           onKeyDown={handleKeyDown}
-          className={classNames('w-full border-none px-4 py-2.5 outline-none focus:outline-none focus:ring-0 active:outline-none active:ring-0 hover:outline-none hover:ring-0', {
-            'pr-0': suffix,
-          })}
+          className={classNames(
+            `w-full rounded-lg border-none bg-transparent ${CONTROL_PADDING_CLASS} outline-none focus:outline-none focus:ring-0 active:outline-none active:ring-0 hover:outline-none hover:ring-0`,
+            {
+              'pr-0': suffix,
+            }
+          )}
           {...rest}
         />
         {suffix && <div className="pr-3 flex items-center justify-center">{suffix}</div>}
       </div>
       {isOpen && filteredOptions.length > 0 && (
-        <ul ref={listRef} className="absolute left-0 top-[100%] z-50 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-slate-200 bg-white shadow-lg" role="listbox">
+        <ul
+          ref={listRef}
+          className="absolute left-0 top-[100%] z-50 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-app-border bg-app-surface shadow-lg"
+          role="listbox"
+        >
           {filteredOptions.map((option, index) => (
             <li
               key={option.value}
@@ -133,10 +137,10 @@ export default function SuggestionInput(props: SuggestionInputProps) {
               aria-selected={highlightedIndex === index}
               onClick={() => handleSelect(option)}
               onMouseEnter={() => setHighlightedIndex(index)}
-              className={`cursor-pointer px-4 py-2 text-sm transition ${highlightedIndex === index ? 'bg-indigo-50 text-indigo-700' : 'text-slate-700 hover:bg-slate-50'}`}
+              className={`cursor-pointer px-4 py-2 text-sm transition ${highlightedIndex === index ? 'bg-app-accentSoft text-app-accent' : 'text-app-text hover:bg-app-subtle'}`}
             >
               <div className="font-medium">{option.label}</div>
-              {option.description ? <div className="text-xs text-slate-500">{option.description}</div> : <div className="text-xs text-slate-500">{option.value}</div>}
+              {option.description ? <div className="text-xs text-app-muted">{option.description}</div> : <div className="text-xs text-app-muted">{option.value}</div>}
             </li>
           ))}
         </ul>

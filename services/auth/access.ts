@@ -7,6 +7,30 @@ import { verifyToken } from '@/utils/jwt'
 import { getReqHeaders } from '../context'
 import { AUTH_TOKEN_NAME } from './constants'
 
+export interface AuthUser {
+  username: string
+}
+
+export async function getAuthUser(): Promise<AuthUser | null> {
+  const cookieStore = await cookies()
+  const authInfo = cookieStore.get(AUTH_TOKEN_NAME)
+  if (!authInfo) {
+    return null
+  }
+
+  const payload = await verifyToken(authInfo.value)
+  if (!payload?.authenticated) {
+    return null
+  }
+
+  const username = typeof payload.username === 'string' ? payload.username : process.env.ACCESS_USERNAME
+  if (!username) {
+    return null
+  }
+
+  return { username }
+}
+
 export interface CheckAccessOptions {
   loginUrl?: string
   redirectUrl?: string
@@ -14,19 +38,7 @@ export interface CheckAccessOptions {
 }
 
 export async function validateCookie() {
-  const cookieStore = await cookies()
-  const authInfo = cookieStore.get(AUTH_TOKEN_NAME)
-  if (!authInfo) {
-    return false
-  }
-
-  const token = authInfo.value
-  const user = token ? verifyToken(token) : null
-  if (!user) {
-    return false
-  }
-
-  return true
+  return Boolean(await getAuthUser())
 }
 
 export async function checkAccess(options?: CheckAccessOptions) {

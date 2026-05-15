@@ -63,7 +63,7 @@ export default function Switch(props: SwitchProps) {
 
   return (
     <div
-      className={`inline-flex rounded-full border border-slate-200 bg-white p-1 text-xs font-semibold text-slate-500 shadow-inner ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
+      className={`inline-flex rounded-full border border-app-border bg-app-surface p-1 text-xs font-semibold text-app-muted shadow-inner ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
     >
       <button
         type="button"
@@ -72,9 +72,9 @@ export default function Switch(props: SwitchProps) {
         aria-disabled={disabled}
         onClick={handleToggle}
         disabled={disabled}
-        className={`relative inline-flex w-full select-none overflow-visible rounded-full bg-white transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30 ${disabled ? 'cursor-not-allowed' : ''}`}
+        className={`relative inline-flex w-full select-none overflow-visible rounded-full bg-app-surface transition focus:outline-none focus-visible:ring-2 focus-visible:ring-app-accent/20 ${disabled ? 'cursor-not-allowed' : ''}`}
       >
-        <span className="pointer-events-none absolute inset-y-0 rounded-full bg-slate-900 text-white shadow transition-all duration-200 ease-out" style={indicatorStyle} />
+        <span className="pointer-events-none absolute inset-y-0 rounded-full bg-app-accent text-white shadow transition-all duration-200 ease-out" style={indicatorStyle} />
         <span className="relative z-10 grid w-full" style={gridStyle}>
           {options.map((option) => {
             const isActive = option.value === value
@@ -82,7 +82,7 @@ export default function Switch(props: SwitchProps) {
             return (
               <span
                 key={option.value}
-                className={`px-4 py-1.5 text-center transition w-full ${isDisabled ? 'cursor-not-allowed opacity-50' : ''} ${isActive ? 'text-white' : 'text-slate-500'}`}
+                className={`px-4 py-1.5 text-center transition w-full ${isDisabled ? 'cursor-not-allowed opacity-50' : ''} ${isActive ? 'text-white' : 'text-app-muted'}`}
               >
                 {option.label}
               </span>

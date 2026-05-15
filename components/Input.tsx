@@ -1,5 +1,7 @@
 import type { ComponentProps } from 'react'
 
+import { CONTROL_CLASS, CONTROL_HELPER_CLASS, CONTROL_LABEL_CLASS } from './controlStyles'
+
 export interface InputProps extends ComponentProps<'input'> {
   label?: string
   helperText?: string
@@ -11,17 +13,15 @@ export interface InputProps extends ComponentProps<'input'> {
 export default function Input(props: InputProps) {
   const { label, helperText, error, errorMessage, className = '', ...rest } = props
 
-  const inputClass = `w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 ${
-    error ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' : ''
-  } ${className}`
+  const inputClass = `${CONTROL_CLASS} ${error ? 'border-app-danger focus:border-app-danger focus:ring-app-danger/15' : ''} ${className}`
 
   if (label) {
     return (
       <label className="flex flex-col gap-2 text-left">
-        <span className="text-sm font-medium text-slate-700">{label}</span>
+        <span className={CONTROL_LABEL_CLASS}>{label}</span>
         <input className={inputClass} {...rest} />
-        {helperText && <p className="text-xs text-slate-500">{helperText}</p>}
-        {error && errorMessage && <p className="text-xs text-red-600">{errorMessage}</p>}
+        {helperText && <p className={CONTROL_HELPER_CLASS}>{helperText}</p>}
+        {error && errorMessage && <p className="text-xs text-app-danger">{errorMessage}</p>}
       </label>
     )
   }

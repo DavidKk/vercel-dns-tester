@@ -1,15 +1,18 @@
-import jwt from 'jsonwebtoken'
+import { type JWTPayload, jwtVerify, SignJWT } from 'jose'
 
-export function generateToken(payload: object) {
-  const { JWT_SECRET, JWT_EXPIRES_IN } = getJWTConfig()
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN as any })
+export async function generateToken(payload: object): Promise<string> {
+  const { secretKey, JWT_EXPIRES_IN } = getJWTConfigWithKey()
+  const expiresIn = /^\d+$/.test(JWT_EXPIRES_IN) ? Number(JWT_EXPIRES_IN) : JWT_EXPIRES_IN
+
+  return new SignJWT({ ...(payload as Record<string, unknown>) }).setProtectedHeader({ alg: 'HS256', typ: 'JWT' }).setExpirationTime(expiresIn).sign(secretKey)
 }
 
-export function verifyToken(token: string) {
+export async function verifyToken(token: string): Promise<JWTPayload | null> {
   try {
-    const { JWT_SECRET } = getJWTConfig()
-    return jwt.verify(token, JWT_SECRET)
-  } catch (err) {
+    const secretKey = getJWTSecretKey()
+    const { payload } = await jwtVerify(token, secretKey)
+    return payload
+  } catch {
     return null
   }
 }
@@ -24,6 +27,21 @@ function getJWTConfig() {
 
   return {
     JWT_SECRET,
+    JWT_EXPIRES_IN,
+  }
+}
+
+function getJWTSecretKey(): Uint8Array {
+  const { JWT_SECRET } = getJWTConfig()
+  return new TextEncoder().encode(JWT_SECRET)
+}
+
+function getJWTConfigWithKey(): { secretKey: Uint8Array; JWT_EXPIRES_IN: string } {
+  const { JWT_SECRET, JWT_EXPIRES_IN } = getJWTConfig()
+  const secretKey = new TextEncoder().encode(JWT_SECRET)
+
+  return {
+    secretKey,
     JWT_EXPIRES_IN,
   }
 }

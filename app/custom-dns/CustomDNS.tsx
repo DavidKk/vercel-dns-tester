@@ -1,15 +1,14 @@
 'use client'
 
-import { CloudArrowUpIcon } from '@heroicons/react/16/solid'
-import type { Project, VM } from '@stackblitz/sdk'
-import Stackblitz from '@stackblitz/sdk'
 import { useRequest } from 'ahooks'
-import { useEffect, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
+import { FiRotateCcw, FiSave } from 'react-icons/fi'
 
 import { updateFiles } from '@/app/actions/custom-dns'
 import { Spinner } from '@/components/Spinner'
 
-import { PACKAGE_FILE } from './constants'
+import { buildFileUpdates } from './buildFileUpdates'
+import { GistFileEditor } from './GistFileEditor'
 
 export interface CustomDNSProps {
   files: Record<
@@ -21,47 +20,37 @@ export interface CustomDNSProps {
   >
 }
 
-export default function CustomDNS(props: CustomDNSProps) {
+/**
+ * Convert Gist file entries from the server into a filename → content map
+ * @param inFiles Files loaded from the Gist API
+ * @returns Editor file map
+ */
+function filesFromProps(inFiles: CustomDNSProps['files']): Record<string, string> {
+  return Object.fromEntries(Object.entries(inFiles).map(([file, { content }]) => [file, content]))
+}
+
+/**
+ * Custom HOSTS editor backed by a GitHub Gist
+ * @param props Gist files from the server
+ * @returns Multi-file editor with save to Gist
+ */
+export function CustomDNS(props: CustomDNSProps) {
   const { files: inFiles } = props
-  const editorRef = useRef<HTMLDivElement>(null)
-  const [vm, setVM] = useState<VM>()
+  const [initialFiles, setInitialFiles] = useState(() => filesFromProps(inFiles))
+  const [files, setFiles] = useState(() => filesFromProps(inFiles))
+  const [activeFile] = useState(() => Object.keys(filesFromProps(inFiles))[0] ?? '')
+
+  const hasChanges = useMemo(() => buildFileUpdates(initialFiles, files).length > 0, [initialFiles, files])
 
   const { run: save, loading } = useRequest(
     async () => {
-      if (!vm) {
+      const updates = buildFileUpdates(initialFiles, files)
+      if (updates.length === 0) {
         return
       }
 
-      const snapshot = await vm.getFsSnapshot()
-      if (!snapshot) {
-        return
-      }
-
-      const needUpdateFiles = Array.from<{ file: string; content: string | null }>(
-        (function* () {
-          for (const [file, content] of Object.entries(snapshot)) {
-            if (file === PACKAGE_FILE) {
-              continue
-            }
-
-            if (!content) {
-              continue
-            }
-
-            yield { file, content }
-          }
-        })()
-      )
-
-      Object.entries(inFiles).forEach(([file]) => {
-        if (needUpdateFiles.some(({ file: f }) => f === file)) {
-          return
-        }
-
-        needUpdateFiles.push({ file, content: null })
-      })
-
-      await updateFiles(...needUpdateFiles)
+      await updateFiles(...updates)
+      setInitialFiles({ ...files })
     },
     {
       manual: true,
@@ -69,49 +58,37 @@ export default function CustomDNS(props: CustomDNSProps) {
     }
   )
 
-  useEffect(() => {
-    ;(async () => {
-      if (!editorRef.current) {
-        return
-      }
-
-      const files = Object.fromEntries(
-        (function* () {
-          for (const [file, { content }] of Object.entries(inFiles)) {
-            yield [file, content]
-          }
-        })()
-      )
-
-      const project: Project = { template: 'javascript', title: 'test', files }
-      const vm = await Stackblitz.embedProject(editorRef.current, project, {
-        view: 'editor',
-        showSidebar: true,
-      })
-
-      setVM(vm)
-    })()
-  }, [])
+  const handleReset = () => {
+    setFiles({ ...initialFiles })
+  }
 
   return (
-    <div className="w-screen h-[calc(100vh-124px)] relative bg-black">
-      <div ref={editorRef} className="w-full h-full"></div>
-      {!vm ? (
-        <div className="fixed w-8 h-8 top-0 left-0 right-0 bottom-0 m-auto">
-          <span className="w-8 h-8 flex items-center justify-center">
-            <Spinner />
-          </span>
+    <main className="flex min-h-0 flex-1 bg-app-subtle text-app-text">
+      <div className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col gap-3 px-4 py-4 md:px-6 lg:px-8">
+        <div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-app-border bg-app-surface shadow-sm">
+          <GistFileEditor files={files} activeFile={activeFile} onFileContentChange={(filename, content) => setFiles((prev) => ({ ...prev, [filename]: content }))} />
         </div>
-      ) : (
-        <button
-          disabled={loading}
-          onClick={save}
-          className="fixed bottom-10 right-2 px-6 py-4 bg-teal-400 text-white rounded-md shadow-lg disable:opacity-100 flex flex-col items-center"
-        >
-          <span className="w-8 h-8 flex items-center justify-center">{loading ? <Spinner /> : <CloudArrowUpIcon />}</span>
-          <span>Save</span>
-        </button>
-      )}
-    </div>
+        <div className="flex shrink-0 justify-end gap-2">
+          <button
+            type="button"
+            onClick={handleReset}
+            disabled={loading || !hasChanges}
+            className="inline-flex h-10 items-center gap-2 rounded-md border border-app-border bg-app-surface px-4 text-sm font-semibold text-app-muted transition hover:border-app-accent/40 hover:bg-app-accentSoft hover:text-app-accent disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <FiRotateCcw size={16} />
+            Reset
+          </button>
+          <button
+            type="button"
+            onClick={save}
+            disabled={loading || !hasChanges || !activeFile}
+            className="inline-flex h-10 items-center gap-2 rounded-md bg-app-accent px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-app-accent/90 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <span className="flex h-4 w-4 items-center justify-center">{loading ? <Spinner /> : <FiSave size={16} />}</span>
+            Save
+          </button>
+        </div>
+      </div>
+    </main>
   )
 }

@@ -1,0 +1,289 @@
+# Vercel DNS Tester - Cursor Rules
+
+## Important: Read Project Documentation First
+
+Before writing or modifying any code, **you must** read the project's `README.md` or `README.zh-CN.md` to understand the project functionality, environment variable configuration, etc.
+
+## Code Standards (Must Strictly Follow)
+
+### 1. Code Comment Standards
+
+#### 1.1 Comment Language
+- **All code comments must be in English**
+- Do not use Chinese or other languages for comments
+
+#### 1.2 Comment Format
+- Use `/** */` format for comments (JSDoc style)
+- Comments should be placed above the code being commented
+- Use single-line format for single-line comments, multi-line format for multi-line comments
+
+#### 1.3 Function Comment Requirements
+- **All exported functions must include complete JSDoc comments**
+- Comments must include:
+  - Function description
+  - `@param` parameter descriptions (every parameter must be described)
+  - `@returns` return value description
+
+**Correct Examples:**
+```tsx
+/**
+ * Calculate the total price with tax
+ * @param price Base price of the item
+ * @param taxRate Tax rate as a decimal (e.g., 0.08 for 8%)
+ * @param quantity Number of items
+ * @returns Total price including tax
+ */
+export function calculateTotalWithTax(price: number, taxRate: number, quantity: number = 1): number {
+  const subtotal = price * quantity
+  return subtotal * (1 + taxRate)
+}
+```
+
+**Incorrect Examples:**
+```tsx
+// ❌ Incorrect: Using Chinese comments
+// 计算商品总价
+export function calculateTotal(price: number, quantity: number): number {
+  return price * quantity
+}
+
+// ❌ Incorrect: Missing JSDoc comments
+export function calculateArea(width: number, height: number): number {
+  return width * height
+}
+
+// ❌ Incorrect: Incomplete comments
+/**
+ * @param data
+ * @returns
+ */
+export function processUserData(data: any) {}
+```
+
+#### 1.4 Variable and Property Comments
+- Complex or non-self-explanatory variables and properties should be commented
+- Constants must be commented to explain their purpose
+- Simple, self-explanatory variables may not need comments
+
+**Correct Examples:**
+```tsx
+/** Maximum number of retry attempts for API calls */
+const MAX_RETRY_ATTEMPTS = 3
+
+/** User authentication token */
+let authToken: string | null = null
+```
+
+#### 1.5 Class and Interface Comments
+- All exported classes and interfaces must include descriptive comments
+- Public methods of classes should be commented
+- Properties of interfaces should be commented
+
+**Correct Examples:**
+```tsx
+/**
+ * User service for managing user data
+ * Provides methods for user authentication and profile management
+ */
+export class UserService {
+  /**
+   * Authenticate user with email and password
+   * @param email User's email address
+   * @param password User's password
+   * @returns Promise that resolves to authentication token
+   */
+  async authenticate(email: string, password: string): Promise<string> {
+    // ...
+  }
+}
+
+/**
+ * User profile information
+ */
+export interface UserProfile {
+  /** Unique user identifier */
+  id: string
+
+  /** User's email address */
+  email: string
+}
+```
+
+### 2. Function Declaration Standards
+
+#### 2.1 Function Export Format (Important)
+- **All exported functions must use `export function xxx() {}` format**
+- **Do not use `export const functionName = () => {}` to export functions**
+
+**Correct Examples:**
+```tsx
+export function calculateTotal(price: number, quantity: number): number {
+  return price * quantity
+}
+```
+
+**Incorrect Examples:**
+```tsx
+// ❌ Incorrect: Using export const to export functions
+export const calculateTotal = (price: number, quantity: number): number => {
+  return price * quantity
+}
+```
+
+#### 2.2 React Component Standards
+- **Page components**: Use `export default function PageName()`
+- **Reusable components**: Use `export function ComponentName()`
+
+**Correct Examples:**
+```tsx
+// Page component
+export default function NotificationTestPage() {
+  return <div>...</div>
+}
+
+// Reusable component
+export function NotificationItem({ message }: { message: string }) {
+  return <div>{message}</div>
+}
+```
+
+#### 2.3 Custom Hook Standards
+- **All custom Hooks must use `export function useXxx() {}` format**
+- **Do not use `export const useXxx = () => {}` to declare Hooks**
+- Hook return values should maintain a flat structure, avoiding deep nesting
+
+**Correct Examples:**
+```tsx
+export function useCounter(initialValue: number = 0) {
+  const [count, setCount] = useState(initialValue)
+
+  function increment() {
+    setCount((c) => c + 1)
+  }
+
+  function decrement() {
+    setCount((c) => c - 1)
+  }
+
+  return {
+    count,
+    increment,
+    decrement,
+  }
+}
+```
+
+**Incorrect Examples:**
+```tsx
+// ❌ Incorrect: Using export const to declare Hook
+export const useCounter = (initialValue: number = 0) => {
+  // ...
+}
+
+// ❌ Incorrect: Return value is too deeply nested
+export function useApi() {
+  return {
+    actions: {
+      fetch: () => {}, // Should be flat, directly return fetch
+      update: () => {},
+    },
+  }
+}
+```
+
+#### 2.4 Utility Function Standards
+- Utility functions should be placed in dedicated directories (e.g., `utils/`)
+- Reusable utility functions use `export function`
+- Internal helper functions are not exported
+
+**Correct Examples:**
+```tsx
+// utils/format.ts
+
+// Internal helper function, not exported
+function padZero(num: number): string {
+  return num.toString().padStart(2, '0')
+}
+
+// Exported utility functions
+export function formatDate(date: Date): string {
+  return date.toISOString().split('T')[0]
+}
+
+export function formatTime(date: Date): string {
+  const hours = padZero(date.getHours())
+  const minutes = padZero(date.getMinutes())
+  return `${hours}:${minutes}`
+}
+```
+
+### 3. Testing Standards (if the project has tests)
+
+#### 3.1 Test File Naming
+- Unit test files use `.spec.ts` suffix
+- E2E test files use `.spec.ts` suffix
+- Test file directory structure should mirror the source code directory structure
+
+#### 3.2 Test Case Naming
+- Test case naming format: `should [expected behavior] [conditions/scenarios]`
+- Use descriptive names that clearly indicate what is being tested
+- Use lowercase for the first letter
+- Avoid using "test" at the beginning of test names
+
+**Correct Examples:**
+```typescript
+it('should merge JSON files correctly - basic case', () => {
+  // ...
+})
+
+it('should handle edge case: a has b does not', () => {
+  // ...
+})
+```
+
+**Incorrect Examples:**
+```typescript
+// ❌ Incorrect: Unclear what is being tested
+it('test merge', () => {
+  // ...
+})
+
+// ❌ Incorrect: Not descriptive enough
+it('merge', () => {
+  // ...
+})
+```
+
+## Tech Stack
+
+- **Framework**: Next.js (App Router)
+- **Language**: TypeScript
+- **Testing**: Jest + Playwright
+- **Deployment**: Vercel
+- **Code Quality**: ESLint + Commitlint
+
+## Workflow
+
+1. **Before starting to code**:
+   - Read the project's README documentation
+   - Understand the project structure and environment variable configuration
+
+2. **When writing code**:
+   - All comments must be in English
+   - Use `export function` instead of `export const` to export functions
+   - Add complete JSDoc comments for all exported functions
+   - Follow the project's directory structure conventions
+
+3. **Before committing code**:
+   - Code must comply with ESLint standards
+   - Commit messages must comply with Commitlint standards
+   - Tests must pass (if tests exist)
+
+## Common Mistakes to Avoid
+
+1. ❌ **Do not use `export const` to export functions**: All function exports must use `export function` syntax
+2. ❌ **Do not use Chinese comments**: All comments must be in English
+3. ❌ **Do not omit JSDoc comments**: All exported functions must have complete JSDoc comments
+4. ❌ **Do not use deeply nested return values**: Hook and utility function return values should maintain a flat structure
+5. ❌ **Do not over-export**: Only export functions that truly need to be used by other modules
+

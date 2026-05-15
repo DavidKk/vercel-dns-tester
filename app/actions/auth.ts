@@ -26,7 +26,7 @@ export async function login(username: string, password: string, token: string) {
     throw new Error('Invalid username or password')
   }
 
-  const authToken = generateToken({ authenticated: true })
+  const authToken = await generateToken({ authenticated: true, username })
   const cookie = serialize(AUTH_TOKEN_NAME, authToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',

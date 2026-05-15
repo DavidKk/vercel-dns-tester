@@ -1,7 +1,9 @@
 'use client'
 
-import FeatherIcon from 'feather-icons-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { FiCheck, FiChevronDown } from 'react-icons/fi'
+
+import { CONTROL_CLASS, CONTROL_HELPER_CLASS, CONTROL_LABEL_CLASS } from './controlStyles'
 
 interface Option {
   label: string
@@ -45,30 +47,29 @@ export default function FormSelect(props: FormSelectProps) {
   return (
     <label className="block text-left">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-slate-700">{label}</span>
-        {helperText ? <span className="text-xs text-slate-400">{helperText}</span> : null}
+        <span className={CONTROL_LABEL_CLASS}>{label}</span>
+        {helperText ? <span className={CONTROL_HELPER_CLASS}>{helperText}</span> : null}
       </div>
 
       <div ref={containerRef} className={`relative mt-2 ${className}`}>
         <button
           type="button"
-          className={`flex w-full items-center justify-between rounded-lg border border-slate-200 bg-white px-4 py-2.5 pr-11 text-left text-sm text-slate-900 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-indigo-500/20 ${disabled ? 'cursor-not-allowed opacity-70' : 'hover:border-slate-300'}`}
+          className={`flex ${CONTROL_CLASS} items-center justify-between pr-11 text-left transition ${disabled ? 'cursor-not-allowed opacity-70' : 'hover:border-app-accent'}`}
           onClick={() => setIsOpen((prev) => !prev)}
           disabled={disabled}
           aria-haspopup="listbox"
           aria-expanded={isOpen}
         >
           <span className="truncate">{selected ? selected.label : placeholder}</span>
-          <FeatherIcon
-            icon="chevron-down"
+          <FiChevronDown
             size={16}
-            className={`pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 transition ${isOpen ? 'rotate-180 text-slate-600' : ''}`}
+            className={`pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-app-muted transition ${isOpen ? 'rotate-180 text-app-text' : ''}`}
           />
         </button>
 
         {isOpen && !disabled ? (
-          <div className="absolute z-20 mt-2 w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
-            <ul role="listbox" className="max-h-60 overflow-y-auto py-1 text-sm text-slate-800">
+          <div className="absolute z-20 mt-2 w-full overflow-hidden rounded-xl border border-app-border bg-app-surface shadow-lg">
+            <ul role="listbox" className="max-h-60 overflow-y-auto py-1 text-sm text-app-text">
               {options.map((option) => {
                 const active = option.value === selected?.value
                 const isDisabled = option.disabled
@@ -77,13 +78,13 @@ export default function FormSelect(props: FormSelectProps) {
                     <button
                       type="button"
                       className={`flex w-full items-center justify-between px-4 py-2 text-left text-sm transition ${
-                        isDisabled ? 'cursor-not-allowed opacity-50' : active ? 'bg-indigo-50 text-indigo-600' : 'hover:bg-slate-50'
+                        isDisabled ? 'cursor-not-allowed opacity-50' : active ? 'bg-app-accentSoft text-app-accent' : 'hover:bg-app-subtle'
                       }`}
                       onClick={() => !isDisabled && handleSelect(option.value)}
                       disabled={isDisabled}
                     >
                       <span className="truncate">{option.label}</span>
-                      {active ? <FeatherIcon icon="check" size={16} className="text-indigo-500" /> : null}
+                      {active ? <FiCheck size={16} className="text-app-accent" /> : null}
                     </button>
                   </li>
                 )

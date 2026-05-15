@@ -3,15 +3,22 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --app-bg: 246 248 251;
+  --app-surface: 255 255 255;
+  --app-subtle: 240 244 248;
+  --app-border: 216 224 234;
+  --app-text: 15 23 42;
+  --app-muted: 100 116 139;
+  --app-accent: 99 102 241;
+  --app-accent-soft: 238 242 255;
+  --app-success: 4 120 87;
+  --app-success-soft: 236 253 245;
+  --app-danger: 220 38 38;
+  --app-danger-soft: 254 242 242;
+  --app-warning: 180 83 9;
+  --app-warning-soft: 255 251 235;
+  --background: rgb(var(--app-bg));
+  --foreground: rgb(var(--app-text));
 }
 
 body {
