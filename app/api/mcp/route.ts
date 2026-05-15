@@ -1,37 +1,34 @@
 import type { NextRequest } from 'next/server'
-import { NextResponse } from 'next/server'
 
 import { jsonUnauthorized } from '@/initializer/response'
 import { authorizeDnsMcpIntegration } from '@/services/auth/mcpIntegrationAuth'
 
-import { MCP_INSTALL_SERVER_KEY } from './installSnippets'
+import { execute, manifest } from './dnsHostsMcpServer'
 
 export const runtime = 'nodejs'
 
 /**
- * GET /api/mcp — minimal MCP manifest stub until tools are wired (requires auth).
+ * GET /api/mcp — MCP manifest (tools list schema) for the DNS Tester HOSTS gist integration.
  * @param req Incoming request
+ * @param context Next.js route context
  * @returns JSON manifest or 401
  */
-export async function GET(req: NextRequest) {
+export async function GET(req: NextRequest, context: { params: Promise<Record<string, string>> }) {
   if (!(await authorizeDnsMcpIntegration(req))) {
     return jsonUnauthorized()
   }
-  return NextResponse.json({
-    name: MCP_INSTALL_SERVER_KEY,
-    version: '0.0.0',
-    description: 'DNS Tester custom HOSTS MCP (tools not yet implemented).',
-  })
+  return manifest(req, context)
 }
 
 /**
- * POST /api/mcp — JSON-RPC stub until tools are wired (requires auth).
+ * POST /api/mcp — JSON-RPC 2.0 (`initialize`, `tools/list`, `tools/call`) or legacy `{ tool, params }`.
  * @param req Incoming request
- * @returns 501 Not Implemented or 401
+ * @param context Next.js route context
+ * @returns JSON-RPC or REST-shaped response or 401
  */
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest, context: { params: Promise<Record<string, string>> }) {
   if (!(await authorizeDnsMcpIntegration(req))) {
     return jsonUnauthorized()
   }
-  return NextResponse.json({ error: 'MCP tools not yet implemented' }, { status: 501 })
+  return execute(req, context)
 }

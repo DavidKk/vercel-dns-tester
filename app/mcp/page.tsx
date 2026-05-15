@@ -5,7 +5,7 @@ import { getRequestOrigin } from '@/utils/get-request-origin'
 
 const { generateMetadata } = generate({
   title: 'MCP Integration',
-  description: 'Install the DNS Tester MCP endpoint in Cursor or VS Code so agents can manage custom HOSTS entries via your Gist.',
+  description: 'Install the DNS Tester MCP endpoints in Cursor or VS Code: authenticated HOSTS gist tools, plus a public DNS probe server for DoH checks.',
 })
 
 export { generateMetadata }

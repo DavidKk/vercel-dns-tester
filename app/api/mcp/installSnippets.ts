@@ -1,6 +1,9 @@
 /** MCP server key in editor config — must match manifest `name` when the server is implemented */
 export const MCP_INSTALL_SERVER_KEY = 'dns-tester-hosts'
 
+/** Public DNS probe MCP (`/api/mcp-dns`) — no auth; must match that route manifest `name` */
+export const MCP_PROBE_INSTALL_SERVER_KEY = 'dns-tester-probe'
+
 /**
  * Strips empty header values so install JSON / deep links only include real auth keys.
  * @param headers Raw header map

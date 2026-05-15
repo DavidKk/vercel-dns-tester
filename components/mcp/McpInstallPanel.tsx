@@ -5,7 +5,13 @@ import { useRouter } from 'next/navigation'
 import { useLayoutEffect, useMemo, useState } from 'react'
 import { FiCheck, FiCopy, FiExternalLink } from 'react-icons/fi'
 
-import { buildCursorMcpInstallDeepLink, buildCursorMcpJson, buildVsCodeMcpInstallDeepLink, MCP_INSTALL_SERVER_KEY } from '@/app/api/mcp/installSnippets'
+import {
+  buildCursorMcpInstallDeepLink,
+  buildCursorMcpJson,
+  buildVsCodeMcpInstallDeepLink,
+  MCP_INSTALL_SERVER_KEY,
+  MCP_PROBE_INSTALL_SERVER_KEY,
+} from '@/app/api/mcp/installSnippets'
 
 import { McpInstallSkeleton } from './McpInstallSkeleton'
 
@@ -64,6 +70,7 @@ export function McpInstallPanel({ requestOrigin }: McpInstallPanelProps) {
   const fromServer = requestOrigin?.trim() ?? ''
   const [baseUrl, setBaseUrl] = useState(fromServer)
   const [jsonCopied, setJsonCopied] = useState(false)
+  const [probeJsonCopied, setProbeJsonCopied] = useState(false)
 
   const {
     data: mcpHeaders,
@@ -88,7 +95,9 @@ export function McpInstallPanel({ requestOrigin }: McpInstallPanelProps) {
   }, [fromServer])
 
   const mcpUrl = baseUrl ? `${baseUrl}/api/mcp` : '/api/mcp'
+  const probeMcpUrl = baseUrl ? `${baseUrl}/api/mcp-dns` : '/api/mcp-dns'
   const cursorJson = useMemo(() => buildCursorMcpJson(mcpUrl, MCP_INSTALL_SERVER_KEY, mcpHeaders), [mcpUrl, mcpHeaders])
+  const probeCursorJson = useMemo(() => buildCursorMcpJson(probeMcpUrl, MCP_PROBE_INSTALL_SERVER_KEY, undefined), [probeMcpUrl])
 
   const isUnauthorizedError = mcpHeadersError instanceof Error && mcpHeadersError.name === 'UnauthorizedError'
 
@@ -99,6 +108,16 @@ export function McpInstallPanel({ requestOrigin }: McpInstallPanelProps) {
       window.setTimeout(() => setJsonCopied(false), 1600)
     } catch {
       setJsonCopied(false)
+    }
+  }
+
+  async function copyProbeJson() {
+    try {
+      await navigator.clipboard.writeText(probeCursorJson)
+      setProbeJsonCopied(true)
+      window.setTimeout(() => setProbeJsonCopied(false), 1600)
+    } catch {
+      setProbeJsonCopied(false)
     }
   }
 
@@ -139,7 +158,7 @@ export function McpInstallPanel({ requestOrigin }: McpInstallPanelProps) {
       </div>
 
       <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-app-border pt-5">
-        <span className="text-xs font-semibold uppercase tracking-wide text-app-muted">Install</span>
+        <span className="text-xs font-semibold uppercase tracking-wide text-app-muted">Install (HOSTS)</span>
         <a href={buildCursorMcpInstallDeepLink(mcpUrl, MCP_INSTALL_SERVER_KEY, mcpHeaders)} className={ghostBtnClass} rel="noopener noreferrer">
           <FiExternalLink size={11} aria-hidden />
           Cursor
@@ -150,6 +169,38 @@ export function McpInstallPanel({ requestOrigin }: McpInstallPanelProps) {
         <a href={buildVsCodeMcpInstallDeepLink(mcpUrl, MCP_INSTALL_SERVER_KEY, 'insiders', mcpHeaders)} className={ghostBtnClass} rel="noopener noreferrer">
           Insiders
         </a>
+      </div>
+
+      <div className="mt-8 space-y-3 border-t border-app-border pt-6 text-sm text-app-text">
+        <h2 className="text-sm font-semibold text-app-text">Public DNS probe MCP</h2>
+        <p className="text-xs leading-relaxed text-app-muted">
+          Separate endpoint for DoH checks only — no session or API key. Tools: <code className="rounded bg-app-subtle px-1 py-0.5 font-mono text-[11px]">dns_probe_query</code>,{' '}
+          <code className="rounded bg-app-subtle px-1 py-0.5 font-mono text-[11px]">dns_probe_options_support</code>,{' '}
+          <code className="rounded bg-app-subtle px-1 py-0.5 font-mono text-[11px]">dns_probe_tooling_summary</code>.
+        </p>
+        <div className="flex items-center justify-between gap-3">
+          <label className="text-xs font-semibold uppercase tracking-wide text-app-muted">Manual config (no headers)</label>
+          <button type="button" onClick={() => void copyProbeJson()} className={ghostBtnClass}>
+            {probeJsonCopied ? <FiCheck size={13} aria-hidden /> : <FiCopy size={13} aria-hidden />}
+            Copy JSON
+          </button>
+        </div>
+        <pre className="w-full min-w-0 overflow-x-auto overflow-y-visible rounded-md border border-app-border bg-app-subtle p-3 text-xs leading-relaxed text-app-text sm:text-[13px]">
+          <code className="block whitespace-pre font-mono">{probeCursorJson}</code>
+        </pre>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-semibold uppercase tracking-wide text-app-muted">Install</span>
+          <a href={buildCursorMcpInstallDeepLink(probeMcpUrl, MCP_PROBE_INSTALL_SERVER_KEY, undefined)} className={ghostBtnClass} rel="noopener noreferrer">
+            <FiExternalLink size={11} aria-hidden />
+            Cursor
+          </a>
+          <a href={buildVsCodeMcpInstallDeepLink(probeMcpUrl, MCP_PROBE_INSTALL_SERVER_KEY, 'stable', undefined)} className={ghostBtnClass} rel="noopener noreferrer">
+            VS Code
+          </a>
+          <a href={buildVsCodeMcpInstallDeepLink(probeMcpUrl, MCP_PROBE_INSTALL_SERVER_KEY, 'insiders', undefined)} className={ghostBtnClass} rel="noopener noreferrer">
+            Insiders
+          </a>
+        </div>
       </div>
     </section>
   )
