@@ -55,8 +55,8 @@ description: >-
 
 ### 安装（Cursor / VS Code）
 
-1. 打开站内 **`/mcp`** 安装页（公开 DNS 探测无需登录；HOSTS MCP 的 headers 在登录后从 **`/api/mcp/headers`** 拉取，不落进公开 HTML）。
-2. **HOSTS MCP**：复制生成的 JSON 或点「Cursor / VS Code」深链；若未配置 `DNS_MCP_HEADERS`，需在编辑器里自行补 **`x-api-key`**（与 `DNS_MCP_HEADERS` 中配置一致）。
+1. 打开站内 **`/mcp`** 安装页（公开 DNS 探测无需登录；HOSTS MCP 登录后从 **`GET /api/mcp/headers`** 拉取完整 headers，UI 默认掩码，复制/一键安装为明文）。
+2. **HOSTS MCP**：复制 JSON 或点「Cursor / VS Code」深链（含 **`x-api-key`** 当服务端已配置）；页面可点眼睛查看密钥，**Copy key** 复制明文。
 3. **公开 DNS MCP**：安装页第二块为 **`/api/mcp-dns`**，**无需** headers。
 
 ### JSON-RPC 调用流程（典型）

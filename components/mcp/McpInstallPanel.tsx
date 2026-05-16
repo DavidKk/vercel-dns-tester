@@ -3,7 +3,7 @@
 import { useRequest } from 'ahooks'
 import Link from 'next/link'
 import { useLayoutEffect, useMemo, useState } from 'react'
-import { FiCheck, FiCopy, FiExternalLink } from 'react-icons/fi'
+import { FiCheck, FiCopy, FiExternalLink, FiEye, FiEyeOff } from 'react-icons/fi'
 
 import {
   buildCursorMcpInstallDeepLink,
@@ -12,6 +12,7 @@ import {
   MCP_INSTALL_SERVER_KEY,
   MCP_PROBE_INSTALL_SERVER_KEY,
 } from '@/app/api/mcp/installSnippets'
+import { maskSensitiveMcpHeadersForDisplay, MCP_SECRET_MASK } from '@/services/auth/mcpHeaderPolicy'
 
 import { McpInstallSkeleton } from './McpInstallSkeleton'
 
@@ -37,17 +38,28 @@ export type McpInstallPanelProps = {
 interface McpHeadersApiBody {
   code: number
   message: string
-  data?: { endpoint?: string; headers?: Record<string, string>; apiKeyConfigured?: boolean }
+  data?: { endpoint?: string; headers?: Record<string, string> }
 }
 
 /** Session state for private HOSTS MCP install snippets */
 interface DnsMcpInstallSession {
   /** True when the browser has a valid session cookie */
   signedIn: boolean
-  /** Non-sensitive headers safe to embed in install JSON (secrets are never returned) */
+  /** Full install headers from `DNS_MCP_HEADERS` (loaded via authenticated API) */
   headers: Record<string, string>
-  /** True when server has `x-api-key` in `DNS_MCP_HEADERS` (value is not exposed) */
-  apiKeyConfigured: boolean
+}
+
+/**
+ * Find the configured `x-api-key` header entry (case-insensitive).
+ * @param headers Install header map
+ * @returns Header name and value, or null when absent
+ */
+function findApiKeyHeaderEntry(headers: Record<string, string>): [string, string] | null {
+  const entry = Object.entries(headers).find(([name]) => name.trim().toLowerCase() === 'x-api-key')
+  if (!entry || !entry[1].trim()) {
+    return null
+  }
+  return entry
 }
 
 /**
@@ -57,7 +69,7 @@ interface DnsMcpInstallSession {
 async function fetchDnsMcpInstallSession(): Promise<DnsMcpInstallSession> {
   const response = await fetch('/api/mcp/headers', { cache: 'no-store', credentials: 'include' })
   if (response.status === 401) {
-    return { signedIn: false, headers: {}, apiKeyConfigured: false }
+    return { signedIn: false, headers: {} }
   }
   const payload = (await response.json()) as McpHeadersApiBody
   if (!response.ok || payload.code !== 0) {
@@ -66,7 +78,6 @@ async function fetchDnsMcpInstallSession(): Promise<DnsMcpInstallSession> {
   return {
     signedIn: true,
     headers: payload.data?.headers ?? {},
-    apiKeyConfigured: Boolean(payload.data?.apiKeyConfigured),
   }
 }
 
@@ -133,10 +144,8 @@ export function McpProbeInstallSection({ probeMcpUrl }: McpProbeInstallSectionPr
 export type McpHostsInstallSectionProps = {
   /** Absolute or relative authenticated MCP endpoint URL */
   mcpUrl: string
-  /** Non-sensitive headers to embed in install JSON */
+  /** Full install headers (plaintext; used for copy and one-click install) */
   mcpHeaders: Record<string, string>
-  /** True when `x-api-key` is configured server-side but not sent to the browser */
-  apiKeyConfigured: boolean
 }
 
 /**
@@ -144,18 +153,37 @@ export type McpHostsInstallSectionProps = {
  * @param props Section props
  * @returns Install UI for `/api/mcp`
  */
-export function McpHostsInstallSection({ mcpUrl, mcpHeaders, apiKeyConfigured }: McpHostsInstallSectionProps) {
+export function McpHostsInstallSection({ mcpUrl, mcpHeaders }: McpHostsInstallSectionProps) {
   const [jsonCopied, setJsonCopied] = useState(false)
-  const cursorJson = useMemo(() => buildCursorMcpJson(mcpUrl, MCP_INSTALL_SERVER_KEY, mcpHeaders), [mcpUrl, mcpHeaders])
+  const [apiKeyCopied, setApiKeyCopied] = useState(false)
+  const [secretsVisible, setSecretsVisible] = useState(false)
+
+  const installJson = useMemo(() => buildCursorMcpJson(mcpUrl, MCP_INSTALL_SERVER_KEY, mcpHeaders), [mcpUrl, mcpHeaders])
+  const previewHeaders = useMemo(() => (secretsVisible ? mcpHeaders : maskSensitiveMcpHeadersForDisplay(mcpHeaders)), [mcpHeaders, secretsVisible])
+  const previewJson = useMemo(() => buildCursorMcpJson(mcpUrl, MCP_INSTALL_SERVER_KEY, previewHeaders), [mcpUrl, previewHeaders])
+  const apiKeyEntry = useMemo(() => findApiKeyHeaderEntry(mcpHeaders), [mcpHeaders])
   const hasEmbeddableHeaders = Object.keys(mcpHeaders).length > 0
 
   async function copyJson() {
     try {
-      await navigator.clipboard.writeText(cursorJson)
+      await navigator.clipboard.writeText(installJson)
       setJsonCopied(true)
       window.setTimeout(() => setJsonCopied(false), 1600)
     } catch {
       setJsonCopied(false)
+    }
+  }
+
+  async function copyApiKey() {
+    if (!apiKeyEntry) {
+      return
+    }
+    try {
+      await navigator.clipboard.writeText(apiKeyEntry[1])
+      setApiKeyCopied(true)
+      window.setTimeout(() => setApiKeyCopied(false), 1600)
+    } catch {
+      setApiKeyCopied(false)
     }
   }
 
@@ -170,6 +198,31 @@ export function McpHostsInstallSection({ mcpUrl, mcpHeaders, apiKeyConfigured }:
         <code className="rounded bg-app-subtle px-1 py-0.5 font-mono text-[11px]">dns_hosts_add</code>,{' '}
         <code className="rounded bg-app-subtle px-1 py-0.5 font-mono text-[11px]">dns_hosts_remove</code>.
       </p>
+      {apiKeyEntry ? (
+        <div className="rounded-md border border-app-border bg-app-subtle px-3 py-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="text-xs font-semibold uppercase tracking-wide text-app-muted">x-api-key</span>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setSecretsVisible((visible) => !visible)}
+                className={ghostBtnClass}
+                aria-pressed={secretsVisible}
+                aria-label={secretsVisible ? 'Hide API key' : 'Show API key'}
+              >
+                {secretsVisible ? <FiEyeOff size={13} aria-hidden /> : <FiEye size={13} aria-hidden />}
+                {secretsVisible ? 'Hide' : 'Show'}
+              </button>
+              <button type="button" onClick={() => void copyApiKey()} className={ghostBtnClass}>
+                {apiKeyCopied ? <FiCheck size={13} aria-hidden /> : <FiCopy size={13} aria-hidden />}
+                Copy key
+              </button>
+            </div>
+          </div>
+          <p className="mt-2 break-all font-mono text-xs text-app-text">{secretsVisible ? apiKeyEntry[1] : MCP_SECRET_MASK}</p>
+          <p className="mt-1 text-[11px] leading-relaxed text-app-muted">Copy JSON and one-click install always use the full key (Cursor does not send browser cookies).</p>
+        </div>
+      ) : null}
       <div className="flex items-center justify-between gap-3">
         <label className="text-xs font-semibold uppercase tracking-wide text-app-muted">Manual config</label>
         <button type="button" onClick={() => void copyJson()} className={ghostBtnClass}>
@@ -178,15 +231,9 @@ export function McpHostsInstallSection({ mcpUrl, mcpHeaders, apiKeyConfigured }:
         </button>
       </div>
       <pre className="w-full min-w-0 overflow-x-auto overflow-y-visible rounded-md border border-app-border bg-app-subtle p-3 text-xs leading-relaxed text-app-text sm:text-[13px]">
-        <code className="block whitespace-pre font-mono">{cursorJson}</code>
+        <code className="block whitespace-pre font-mono">{previewJson}</code>
       </pre>
-      {apiKeyConfigured ? (
-        <p className="text-xs leading-relaxed text-app-muted">
-          Server has <code className="rounded bg-app-subtle px-1 py-0.5 font-mono text-[11px] text-app-text">x-api-key</code> configured. The key is not shown here — add the same
-          value from your secret store into <code className="rounded bg-app-subtle px-1 py-0.5 font-mono text-[11px] text-app-text">mcp.json</code> after install (Cursor does not
-          send browser session cookies).
-        </p>
-      ) : !hasEmbeddableHeaders ? (
+      {!hasEmbeddableHeaders ? (
         <p className="text-xs leading-relaxed text-app-muted">
           Set <code className="rounded bg-app-subtle px-1 py-0.5 font-mono text-[11px] text-app-text">DNS_MCP_HEADERS</code> on the server, or paste{' '}
           <code className="rounded bg-app-subtle px-1 py-0.5 font-mono text-[11px] text-app-text">x-api-key</code> into your editor config after install.
@@ -211,7 +258,7 @@ export function McpHostsInstallSection({ mcpUrl, mcpHeaders, apiKeyConfigured }:
 
 /**
  * Renders DNS Tester MCP install UI: public probe MCP always visible; HOSTS MCP after sign-in.
- * Auth headers load via `/api/mcp/headers` so secrets are not embedded in public HTML.
+ * Auth headers load via `/api/mcp/headers` after sign-in (masked in UI; copy/install use plaintext).
  * @param requestOrigin Optional scheme+host from the server (see {@link McpInstallPanelProps.requestOrigin})
  * @returns Install card with public and optional private sections
  */
@@ -249,7 +296,7 @@ export function McpInstallPanel({ requestOrigin }: McpInstallPanelProps) {
             </p>
           </div>
         ) : session?.signedIn ? (
-          <McpHostsInstallSection mcpUrl={mcpUrl} mcpHeaders={session.headers} apiKeyConfigured={session.apiKeyConfigured} />
+          <McpHostsInstallSection mcpUrl={mcpUrl} mcpHeaders={session.headers} />
         ) : (
           <div className="space-y-2 text-sm text-app-text">
             <h2 className="text-sm font-semibold text-app-text">Private HOSTS MCP</h2>

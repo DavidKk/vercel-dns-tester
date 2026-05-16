@@ -62,7 +62,7 @@ description: >-
 
 ### 安装（Cursor / VS Code）
 
-1. 打开站内 **`/mcp`** 安装页（公开 DNS 探测无需登录；HOSTS MCP 在登录后展示安装区块；**`x-api-key` 不会通过 `/api/mcp/headers` 下发到浏览器**）。
+1. 打开站内 **`/mcp`** 安装页（公开 DNS 探测无需登录；HOSTS MCP 登录后从 **`GET /api/mcp/headers`** 拉取完整 `DNS_MCP_HEADERS`，页面默认掩码显示，复制 JSON / 一键安装为明文）。
 2. **HOSTS MCP**：复制 JSON 或点「Cursor / VS Code」深链；在编辑器中自行配置 **`x-api-key`**（与运维提供的 `DNS_MCP_HEADERS` 一致）。
 3. **公开 DNS MCP**：安装页第一块为 **`/api/mcp-dns`**，**无需** headers。
 

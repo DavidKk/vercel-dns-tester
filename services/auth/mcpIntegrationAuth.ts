@@ -3,7 +3,14 @@ import type { NextRequest } from 'next/server'
 import { validateCookie } from '@/services/auth/access'
 import { timingSafeStringEqual } from '@/utils/timing-safe'
 
-export { getClientSafeMcpInstallHeaders, hasConfiguredMcpApiKey, isSensitiveMcpHeaderName } from './mcpHeaderPolicy'
+export {
+  getAuthenticatedMcpInstallHeaders,
+  getClientSafeMcpInstallHeaders,
+  hasConfiguredMcpApiKey,
+  isSensitiveMcpHeaderName,
+  maskSensitiveMcpHeadersForDisplay,
+  MCP_SECRET_MASK,
+} from './mcpHeaderPolicy'
 
 /**
  * Parse MCP auth headers from env `DNS_MCP_HEADERS` (JSON object of header name → value).
@@ -57,7 +64,7 @@ function requestMatchesConfiguredMcpHeaders(req: NextRequest, configured: Record
 
 /**
  * Authorize MCP HTTP routes (`/api/mcp`): valid session cookie, or all headers in `DNS_MCP_HEADERS` on the request.
- * The `/mcp` page is public; `GET /api/mcp/headers` never returns secret header values.
+ * The `/mcp` page is public; `GET /api/mcp/headers` returns full install headers only for a valid session.
  * @param req Incoming Next.js request
  * @returns True when the caller may use `/api/mcp`
  */
