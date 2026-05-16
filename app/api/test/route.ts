@@ -4,6 +4,7 @@ import { testDNS } from '@/app/actions/test-dns'
 import { isDNSType } from '@/app/api/test/types'
 import { api } from '@/initializer/controller'
 import { isDNSQueryType } from '@/services/dns'
+import { assertPublicDnsHostAllowed } from '@/utils/dns-host-policy'
 import { extractDNSDomain } from '@/utils/domain'
 
 export const POST = api(async (req: NextRequest) => {
@@ -27,6 +28,7 @@ export const POST = api(async (req: NextRequest) => {
   if (!dnsHost) {
     throw new Error('Invalid dnsService')
   }
+  assertPublicDnsHostAllowed(dnsHost)
   const extraHeaders =
     headers && typeof headers === 'object' && !Array.isArray(headers) ? Object.fromEntries(Object.entries(headers).filter(([, v]) => typeof v === 'string')) : undefined
   if (!isDNSQueryType(queryType)) {

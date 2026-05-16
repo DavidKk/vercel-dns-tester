@@ -3,18 +3,21 @@ import type { NextRequest } from 'next/server'
 import { api } from '@/initializer/controller'
 import { jsonSuccess, jsonUnauthorized } from '@/initializer/response'
 import { validateCookie } from '@/services/auth/access'
-import { getConfiguredDnsMcpHeaders } from '@/services/auth/mcpIntegrationAuth'
+import { getClientSafeMcpInstallHeaders, getConfiguredDnsMcpHeaders, hasConfiguredMcpApiKey } from '@/services/auth/mcpIntegrationAuth'
 
-/** Response body for MCP install UI (authenticated only) */
+/** Response body for MCP install UI (authenticated only; secrets are never included) */
 export interface DnsMcpHeadersPayload {
   /** Absolute MCP HTTP endpoint for this deployment */
   endpoint: string
-  /** Headers to send with MCP requests (from `DNS_MCP_HEADERS`) */
+  /** Non-sensitive headers safe to embed in install JSON */
   headers: Record<string, string>
+  /** True when `x-api-key` is configured server-side but omitted from this response */
+  apiKeyConfigured: boolean
 }
 
 /**
- * GET /api/mcp/headers — MCP endpoint URL and auth headers for signed-in users (avoids embedding secrets in public HTML).
+ * GET /api/mcp/headers — MCP endpoint URL and non-sensitive install headers for signed-in users.
+ * Secret values (`x-api-key`, `Authorization`, etc.) are never returned to the browser.
  * @param req Incoming request (origin used for endpoint URL)
  * @returns Standard success with {@link DnsMcpHeadersPayload} or 401
  */
@@ -23,8 +26,17 @@ export const GET = api(async (req: NextRequest) => {
     return jsonUnauthorized()
   }
 
-  return jsonSuccess({
-    endpoint: `${req.nextUrl.origin}/api/mcp`,
-    headers: getConfiguredDnsMcpHeaders(),
-  } satisfies DnsMcpHeadersPayload)
+  const configured = getConfiguredDnsMcpHeaders()
+
+  const headers = new Headers()
+  headers.set('Cache-Control', 'private, no-store')
+
+  return jsonSuccess(
+    {
+      endpoint: `${req.nextUrl.origin}/api/mcp`,
+      headers: getClientSafeMcpInstallHeaders(configured),
+      apiKeyConfigured: hasConfiguredMcpApiKey(configured),
+    } satisfies DnsMcpHeadersPayload,
+    { headers }
+  )
 })

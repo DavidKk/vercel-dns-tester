@@ -12,7 +12,9 @@ description: >-
 
 ## 一、拥有什么内容
 
-本项目暴露 **两个** 独立的 HTTP MCP 端点，协议相同（支持 **JSON-RPC 2.0** 的 `initialize`、`tools/list`、`tools/call`，以及旧版 POST body：`{ "tool": "<name>", "params": { ... } }`）。
+本项目暴露 **两个** 独立的 HTTP MCP 端点，协议相同（支持 **JSON-RPC 2.0** 的 `initialize`、`tools/list`、`tools/call`、`resources/list`、`resources/read`，以及旧版 POST body：`{ "tool": "<name>", "params": { ... } }`）。
+
+> MCP 下发的 SKILL 与仓库内 **`skills/dns-tester-mcp/SKILL.md`** 同源；`resources/read` URI 为 `skill://vercel-dns-tester-mcp/vercel-dns-tester-mcp-skill.md`。
 
 ### 1. HOSTS / Gist（需鉴权）— `GET` / `POST` **`/api/mcp`**
 
@@ -35,7 +37,7 @@ description: >-
 
 ### 2. DNS 探测（公开、无鉴权）— `GET` / `POST` **`/api/mcp-dns`**
 
-- **编辑器里的 server key（name）**：`dns-tester-probe`。
+- **编辑器里的 server key（name）**：`dns-tester`（安装页默认；旧名 `dns-tester-probe` 仅作兼容说明）。
 - **作用**：与首页 DoH 测试相同逻辑的 **上游 DoH 查询**（不向本应用 Gist 写入）。
 - **工具前缀**：`dns_probe_*`
 
@@ -53,7 +55,7 @@ description: >-
 
 ### 安装（Cursor / VS Code）
 
-1. 登录后打开站内 **`/mcp`** 安装页（HOSTS MCP 的 headers 从 **`/api/mcp/headers`** 拉取，不落进公开 HTML）。
+1. 打开站内 **`/mcp`** 安装页（公开 DNS 探测无需登录；HOSTS MCP 的 headers 在登录后从 **`/api/mcp/headers`** 拉取，不落进公开 HTML）。
 2. **HOSTS MCP**：复制生成的 JSON 或点「Cursor / VS Code」深链；若未配置 `DNS_MCP_HEADERS`，需在编辑器里自行补 **`x-api-key`**（与 `DNS_MCP_HEADERS` 中配置一致）。
 3. **公开 DNS MCP**：安装页第二块为 **`/api/mcp-dns`**，**无需** headers。
 

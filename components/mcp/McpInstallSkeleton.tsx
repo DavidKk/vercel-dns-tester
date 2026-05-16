@@ -1,5 +1,5 @@
 /**
- * Placeholder card while MCP install headers load (matches {@link McpInstallPanel} layout)
+ * Placeholder while private HOSTS MCP headers load (matches {@link McpHostsInstallSection} layout)
  * @returns Pulsing skeleton for the install section
  */
 export function McpInstallSkeleton() {

@@ -1,8 +1,9 @@
-import { timingSafeEqual } from 'node:crypto'
-
 import type { NextRequest } from 'next/server'
 
 import { validateCookie } from '@/services/auth/access'
+import { timingSafeStringEqual } from '@/utils/timing-safe'
+
+export { getClientSafeMcpInstallHeaders, hasConfiguredMcpApiKey, isSensitiveMcpHeaderName } from './mcpHeaderPolicy'
 
 /**
  * Parse MCP auth headers from env `DNS_MCP_HEADERS` (JSON object of header name → value).
@@ -34,24 +35,29 @@ export function getConfiguredDnsMcpHeaders(): Record<string, string> {
 }
 
 /**
- * Compare two strings in constant time to reduce timing leaks on API keys.
- * @param a First secret string
- * @param b Second secret string
- * @returns True when lengths match and bytes are equal
+ * Compare every configured MCP header on the incoming request (constant-time per value).
+ * @param req Incoming Next.js request
+ * @param configured Expected headers from env
+ * @returns True when all configured headers match
  */
-function timingSafeStringEqual(a: string, b: string): boolean {
-  const ba = Buffer.from(a, 'utf8')
-  const bb = Buffer.from(b, 'utf8')
-  if (ba.length !== bb.length) {
+function requestMatchesConfiguredMcpHeaders(req: NextRequest, configured: Record<string, string>): boolean {
+  const entries = Object.entries(configured)
+  if (entries.length === 0) {
     return false
   }
-  return timingSafeEqual(ba, bb)
+
+  return entries.every(([name, expected]) => {
+    const actual = req.headers.get(name)?.trim() ?? ''
+    if (!actual) {
+      return false
+    }
+    return timingSafeStringEqual(actual, expected)
+  })
 }
 
 /**
- * Authorize MCP HTTP routes (`/api/mcp`): valid session cookie, or `x-api-key` matching `DNS_MCP_HEADERS`
- * (for editor clients after copying install JSON while signed in on `/mcp`). The `/mcp` page uses
- * {@link checkAccess} on the server; `GET /api/mcp/headers` only returns keys when the session cookie is valid.
+ * Authorize MCP HTTP routes (`/api/mcp`): valid session cookie, or all headers in `DNS_MCP_HEADERS` on the request.
+ * The `/mcp` page is public; `GET /api/mcp/headers` never returns secret header values.
  * @param req Incoming Next.js request
  * @returns True when the caller may use `/api/mcp`
  */
@@ -61,15 +67,5 @@ export async function authorizeDnsMcpIntegration(req: NextRequest): Promise<bool
   }
 
   const configuredHeaders = getConfiguredDnsMcpHeaders()
-  const configuredApiKey = Object.entries(configuredHeaders).find(([headerName]) => headerName.toLowerCase() === 'x-api-key')?.[1]
-  if (!configuredApiKey) {
-    return false
-  }
-
-  const headerKey = req.headers.get('x-api-key')?.trim() ?? ''
-  if (!headerKey) {
-    return false
-  }
-
-  return timingSafeStringEqual(headerKey, configuredApiKey)
+  return requestMatchesConfiguredMcpHeaders(req, configuredHeaders)
 }

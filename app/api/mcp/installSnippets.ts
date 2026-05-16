@@ -2,7 +2,7 @@
 export const MCP_INSTALL_SERVER_KEY = 'dns-tester-hosts'
 
 /** Public DNS probe MCP (`/api/mcp-dns`) — no auth; must match that route manifest `name` */
-export const MCP_PROBE_INSTALL_SERVER_KEY = 'dns-tester-probe'
+export const MCP_PROBE_INSTALL_SERVER_KEY = 'dns-tester'
 
 /**
  * Strips empty header values so install JSON / deep links only include real auth keys.

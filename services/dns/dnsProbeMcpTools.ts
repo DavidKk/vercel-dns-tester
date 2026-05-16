@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 import { type Tool, tool } from '@/initializer/mcp/tool'
 import { checkOptionsSupport, fetchDNSQuery, fetchDNSResolve } from '@/services/dns'
+import { assertPublicDnsHostAllowed } from '@/utils/dns-host-policy'
 import { extractDNSDomain } from '@/utils/domain'
 
 /**
@@ -14,6 +15,7 @@ function normalizeDnsHost(dnsService: string): string {
   if (!host) {
     throw new Error('Invalid dnsService: could not resolve a host from the value')
   }
+  assertPublicDnsHostAllowed(host)
   return host
 }
 

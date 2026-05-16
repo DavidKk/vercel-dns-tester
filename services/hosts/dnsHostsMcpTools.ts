@@ -256,7 +256,6 @@ export function buildDnsHostsMcpToolsMap(): Map<string, Tool> {
     async () => ({
       defaultFilename: GIST_HOSTS_FILE,
       tools: ['dns_hosts_read', 'dns_hosts_write', 'dns_hosts_add', 'dns_hosts_remove', 'dns_hosts_exists', 'dns_hosts_lookup', 'dns_hosts_list', 'dns_hosts_tooling_summary'],
-      gistEnv: ['GIST_ID', 'GIST_TOKEN'],
     })
   )
 

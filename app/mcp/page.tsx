@@ -1,22 +1,19 @@
 import { McpInstallPanel } from '@/components/mcp/McpInstallPanel'
 import { generate } from '@/components/Meta'
-import { checkAccess } from '@/services/auth/access'
 import { getRequestOrigin } from '@/utils/get-request-origin'
 
 const { generateMetadata } = generate({
   title: 'MCP Integration',
-  description: 'Install the DNS Tester MCP endpoints in Cursor or VS Code: authenticated HOSTS gist tools, plus a public DNS probe server for DoH checks.',
+  description: 'Install the public DNS probe MCP without signing in, or sign in to add authenticated HOSTS gist tools for Cursor and VS Code.',
 })
 
 export { generateMetadata }
 
 /**
- * MCP install page — requires login on the server (same as Hosts); install headers still load client-side from `/api/mcp/headers`.
- * @returns Server-rendered install panel without a separate page title block
+ * MCP install page — public; private HOSTS install snippets load after sign-in via `/api/mcp/headers`.
+ * @returns Server-rendered install panel
  */
 export default async function McpPage() {
-  await checkAccess({ redirectUrl: '/mcp', isApiRouter: false })
-
   const requestOrigin = await getRequestOrigin()
 
   return (

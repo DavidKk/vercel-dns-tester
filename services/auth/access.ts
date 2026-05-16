@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import type { NextRequest } from 'next/server'
 
 import { verifyToken } from '@/utils/jwt'
+import { timingSafeStringEqual } from '@/utils/timing-safe'
 
 import { getReqHeaders } from '../context'
 import { AUTH_TOKEN_NAME } from './constants'
@@ -87,19 +88,36 @@ export function checkHeaders(requiredHeaders: Record<string, string>) {
 }
 
 export function checkApiAccess() {
-  const token = process.env.API_SECRET
-  return checkHeaders({ 'X-API-TOKEN': token })
+  const token = process.env.API_SECRET?.trim()
+  if (!token) {
+    return false
+  }
+
+  const headerToken = getReqHeaders()?.get('X-API-TOKEN')?.trim() ?? ''
+  if (!headerToken) {
+    return false
+  }
+
+  return timingSafeStringEqual(headerToken, token)
 }
 
 export function checkDoHAccess(req: NextRequest) {
-  const apiKey = process.env.DOH_API_KEY
+  const apiKey = process.env.DOH_API_KEY?.trim()
   if (!apiKey) {
     return true
   }
 
-  const headerKey = req.headers.get('x-doh-api-key')
+  const headerKey = req.headers.get('x-doh-api-key')?.trim() ?? ''
   const url = new URL(req.url)
-  const queryKey = url.searchParams.get('token')
+  const queryKey = url.searchParams.get('token')?.trim() ?? ''
 
-  return headerKey === apiKey || queryKey === apiKey
+  if (headerKey && timingSafeStringEqual(headerKey, apiKey)) {
+    return true
+  }
+
+  if (queryKey && timingSafeStringEqual(queryKey, apiKey)) {
+    return true
+  }
+
+  return false
 }
