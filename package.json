@@ -64,7 +64,7 @@
     "cz-customizable-i18n-config": "^0.0.1-alpha.2",
     "eslint": "^9",
     "eslint-config-next": "15.5.9",
-    "eslint-config-prettier": "^9.0.0",
+    "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.29.0",
     "eslint-plugin-prettier": "^5.2.1",
     "eslint-plugin-simple-import-sort": "^14.0.0",
